@@ -1,0 +1,35 @@
+/* TODO Dev 3 — Sprint 1 | Issue #4
+   Estilos do grid, névoa de guerra, linha pontilhada TSP e animações
+   Usar variáveis do theme.css para cores (--color-fog, --color-clue, etc.)
+
+   Referência Figma: MapScreen
+*/
+
+.map-screen {
+  /* TODO */
+}
+
+.grid {
+  /* TODO — display: grid; grid-template-columns: repeat(10, 48px); */
+}
+
+.cell {
+  /* TODO */
+}
+
+.cell--fog {
+  /* TODO — overlay escuro */
+}
+
+.cell--revealed {
+  /* TODO — animação fade-in 300ms */
+}
+
+.cell--clue::after {
+  /* TODO — ícone ✦ com animação pulse */
+}
+
+/* Linha pontilhada TSP — Sprint 2 */
+.tsp-route {
+  /* TODO */
+}

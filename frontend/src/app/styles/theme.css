@@ -1,0 +1,43 @@
+/* TODO Dev 3 — Sprint 1
+   Variáveis de design vindas do Figma (Detective Blackwood)
+   Preencher com os tokens exatos do arquivo Figma após exportação
+
+   Paleta sugerida pelo protótipo: tons escuros vitoriana (sépia, bordô, dourado)
+*/
+
+:root {
+  /* Cores principais */
+  --color-background:   /* TODO: ex #1a1208 */;
+  --color-surface:      /* TODO */;
+  --color-primary:      /* TODO: dourado/âmbar */;
+  --color-text:         /* TODO */;
+  --color-text-muted:   /* TODO */;
+
+  /* Névoa de guerra */
+  --color-fog:          /* TODO: rgba escuro */;
+
+  /* Pistas por relevância */
+  --color-clue-high:    /* TODO: vermelho — peso >= 9 */;
+  --color-clue-medium:  /* TODO: amarelo  — peso 7-8 */;
+  --color-clue-low:     /* TODO: verde    — peso < 7 */;
+
+  /* Grid */
+  --cell-size:          48px;
+  --grid-cols:          10;
+
+  /* Tipografia */
+  --font-body:          /* TODO: nome da fonte */;
+  --font-display:       /* TODO: fonte de título */;
+
+  /* Espaçamentos */
+  --spacing-xs:  4px;
+  --spacing-sm:  8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Bordas e sombras */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --shadow-card: /* TODO */;
+}

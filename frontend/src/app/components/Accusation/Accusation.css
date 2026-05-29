@@ -1,0 +1,24 @@
+/* TODO Dev 4 — Sprint 2 | Issue #7
+   Estilos da tela de acusação, confetes CSS e animação shake
+   Usar variáveis do theme.css
+*/
+
+.accusation-screen {
+  /* TODO */
+}
+
+.accusation-screen--vitoria {
+  /* TODO — fundo verde + confetes */
+}
+
+.accusation-screen--derrota {
+  /* TODO — fundo vermelho + shake */
+}
+
+@keyframes shake {
+  /* TODO */
+}
+
+@keyframes confetti {
+  /* TODO */
+}

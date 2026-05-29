@@ -1,0 +1,25 @@
+/* TODO Dev 4 — Sprint 1
+   Estilos do HUD, inventário, notificação deslizante e indicadores de cor
+   Usar variáveis do theme.css
+*/
+
+.hud {
+  /* TODO */
+}
+
+.inventario {
+  /* TODO */
+}
+
+.pista-card {
+  /* TODO */
+}
+
+.pista-card--alta    { /* peso >= 9 — vermelho */ }
+.pista-card--media   { /* peso 7-8  — amarelo  */ }
+.pista-card--baixa   { /* peso < 7  — verde    */ }
+
+/* Notificação deslizante */
+.pista-notification {
+  /* TODO — animação slide-in da direita */
+}

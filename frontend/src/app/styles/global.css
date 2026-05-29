@@ -1,0 +1,19 @@
+/* TODO Dev 3 — Sprint 1
+   Reset e estilos globais da aplicação
+*/
+
+@import './theme.css';
+@import './fonts.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  min-height: 100vh;
+}
