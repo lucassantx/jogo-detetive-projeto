@@ -1,25 +1,43 @@
-// TODO Dev 3 — Sprint 1 | Issue #4
-// Hook para movimentação do detetive no grid
-//
-// Responsabilidades:
-//   - Ouvir eventos de teclado (WASD + setas)
-//   - Validar limites do grid (0–9)
-//   - Bloquear movimento quando dialogoAtivo === true
-//   - Chamar POST /api/partida/:id/mover na Sprint 2
-//
-// Estado retornado: posicao { x, y }
+import { useEffect } from 'react';
+import { useGameStore } from '../../store/gameStore';
 
-import { useState, useEffect } from 'react';
-
-export function useMovimento(dialogoAtivo: boolean) {
-  const [posicao, setPosicao] = useState({ x: 0, y: 0 });
+export function useMovimento() {
+  const mover        = useGameStore(s => s.mover);
+  const dialogoAtivo = useGameStore(s => s.dialogoAtivo);
 
   useEffect(() => {
-    // TODO — adicionar listener de keydown
-    return () => {
-      // TODO — remover listener
-    };
-  }, [dialogoAtivo]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (dialogoAtivo) return;
 
-  return { posicao };
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          e.preventDefault();
+          mover(0, -1);
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          e.preventDefault();
+          mover(0, 1);
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          e.preventDefault();
+          mover(-1, 0);
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          e.preventDefault();
+          mover(1, 0);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [dialogoAtivo, mover]);
 }
