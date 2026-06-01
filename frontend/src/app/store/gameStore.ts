@@ -158,7 +158,7 @@ const DIALOGOS_MOCK: Record<string, NoDialogo> = {
   },
   B2: {
     id: 'B2', npc: 'Victor Blackwood',
-    texto: 'Esse testamento é invenção sua! Meu irmão me deixaria tudo — como sempre prometeu!',
+    texto: 'Esse testamento é invenção sua! Meu tio me deixaria tudo — como sempre prometeu!',
     escolhas: [],
   },
   B3: {
