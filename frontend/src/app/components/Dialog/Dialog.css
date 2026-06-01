@@ -1,22 +1,120 @@
-/* TODO Dev 3 — Sprint 1 | Issue #6
-   Estilos da caixa de diálogo, typewriter, botões de escolha e animações
-   Usar variáveis do theme.css
+/* ─── Overlay — posição fixa na base da tela ──────────────────────────────── */
 
-   Referência Figma: DialogueScreen
-*/
+.dialogue-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.dialogue-overlay--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ─── Painel ───────────────────────────────────────────────────────────────── */
 
 .dialogue-screen {
-  /* TODO */
+  background-color: var(--color-surface);
+  border-top: 2px solid var(--color-primary-dark);
+  box-shadow: var(--shadow-dialog);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  min-height: 180px;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
+
+/* ─── Nome do NPC ──────────────────────────────────────────────────────────── */
+
+.dialogue-npc-nome {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-surface-alt);
+}
+
+/* ─── Texto com typewriter ─────────────────────────────────────────────────── */
 
 .dialogue-text {
-  /* TODO — typewriter */
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  min-height: 50px;
+  flex: 1;
+  cursor: pointer;
 }
 
+.typewriter-cursor {
+  display: inline-block;
+  color: var(--color-primary);
+  margin-left: 1px;
+  animation: blink-cursor 0.7s step-end infinite;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ─── Botões de escolha ────────────────────────────────────────────────────── */
+
 .dialogue-choices {
-  /* TODO */
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
 .dialogue-choice-btn {
-  /* TODO */
+  background: transparent;
+  border: 1px solid var(--color-primary-dark);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.dialogue-choice-btn:hover,
+.dialogue-choice-btn:focus-visible {
+  background: var(--color-surface-alt);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  outline: none;
+}
+
+.choice-xp {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  margin-right: var(--spacing-xs);
+}
+
+/* Botão "Encerrar conversa" */
+.dialogue-choice-btn--end {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-muted);
+}
+
+.dialogue-choice-btn--end:hover,
+.dialogue-choice-btn--end:focus-visible {
+  border-color: var(--color-text);
+  color: var(--color-text);
+  background: var(--color-surface-alt);
 }
