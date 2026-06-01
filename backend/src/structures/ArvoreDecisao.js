@@ -1,31 +1,19 @@
-// TODO Dev 1 — Sprint 1 | Issue #3
-// Implementar Árvore de Decisão para os diálogos dos NPCs
-//
-// Estrutura de um nó:
-// {
-//   id: string,           // ex: 'A0', 'A1a', 'B3'
-//   npc: string,
-//   texto: string,
-//   escolhas: [
-//     { texto: string, proximoId: string, pistaBloqueada?: string, xp: number }
-//   ]
-// }
-//
-// Complexidade: get O(1) via Map | escolher O(1)
-//
-// Integração: usado por dialogoController → /interagir e /escolha
-
 class ArvoreDecisao {
   constructor(nos) {
-    // TODO — armazenar em Map<id, no>
+    // armazena nós em Map para acesso O(1) por id
+    this.nos = new Map(nos.map(n => [n.id, n]));
   }
 
+  // retorna o nó pelo id ou null se não existir
   get(id) {
-    // TODO — retorna nó ou null
+    return this.nos.get(id) || null;
   }
 
+  // navega para o próximo nó conforme a escolha do jogador
   escolher(noAtualId, index) {
-    // TODO — retorna { proximoNo, pistaBloqueada, xp } ou null
+    const no = this.get(noAtualId);
+    if (!no || !no.escolhas || index >= no.escolhas.length) return null;
+    return no.escolhas[index];
   }
 }
 
