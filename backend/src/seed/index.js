@@ -1,7 +1,7 @@
 // TODO Dev 2 — Sprint 1
 // Executa o seed no MongoDB: limpa coleções e insere dados iniciais
 // Rodar com: node src/seed/index.js
-
+require('dotenv').config()
 const mongoose = require('mongoose');
 const dialogos = require('./dialogos');
 const pistas = require('./pistas');
@@ -13,8 +13,8 @@ const Pista = require('../models/Pista');
 const Suspeito = require('../models/Suspeito');
 
 // Configuracao do banco de dados
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/blackwood-detective';
-
+const MONGODB_URI = process.env.MONGODB_URI;
+console.log(MONGODB_URI)
 async function connectDB() {
   console.log('[1/6] Conectando ao MongoDB...');
   await mongoose.connect(MONGODB_URI);
