@@ -57,6 +57,10 @@ function heldKarp(pontos) {
   if (n === 0) return [];
   if (n === 1) return [pontos[0]];
   if (n === 2) return [pontos[0], pontos[1]];
+  if (n === 3) {
+    // Para triângulo, retorna ordem direta
+    return [pontos[0], pontos[1], pontos[2]];
+  }
 
   // Pré-calcular matriz de distâncias
   const dist = Array(n).fill().map(() => Array(n).fill(0));
@@ -98,6 +102,7 @@ function heldKarp(pontos) {
   let lastNode = 0;
 
   for (let i = 0; i < n; i++) {
+    if (dp[fullMask][i] === Infinity) continue;
     const total = dp[fullMask][i] + dist[i][0];
     if (total < bestDist) {
       bestDist = total;
@@ -113,13 +118,22 @@ function heldKarp(pontos) {
   while (current !== 0 && current !== -1) {
     path.unshift(current);
     const prev = parent[mask][current];
+    if (prev === -1) break;
     mask &= ~(1 << current);
     current = prev;
   }
   path.unshift(0);
 
+  // Remover duplicatas se houver
+  const uniquePath = [];
+  for (const idx of path) {
+    if (!uniquePath.includes(idx)) {
+      uniquePath.push(idx);
+    }
+  }
+
   // Converter índices para objetos
-  return path.map(idx => pontos[idx]);
+  return uniquePath.map(idx => pontos[idx]);
 }
 
 // =============================================================
@@ -163,12 +177,17 @@ function vizinhoMaisProximo(locais) {
 }
 
 function vizinhoMaisProximoMelhorado(locais) {
-  if (!locais || locais.length <= 1) return vizinhoMaisProximo(locais);
+  if (!locais || locais.length === 0) return [];
+  if (locais.length === 1) return [locais[0]];
+  if (locais.length === 2) return [locais[0], locais[1]];
 
   let melhorRota = null;
   let menorDist = Infinity;
 
-  for (let start = 0; start < Math.min(locais.length, 10); start++) {
+  // Testar apenas os primeiros 10 pontos como início para performance
+  const maxStart = Math.min(locais.length, 10);
+
+  for (let start = 0; start < maxStart; start++) {
     const n = locais.length;
     const visitados = new Array(n).fill(false);
     const rota = [];
@@ -205,7 +224,7 @@ function vizinhoMaisProximoMelhorado(locais) {
     }
   }
 
-  return melhorRota || locais;
+  return melhorRota || vizinhoMaisProximo(locais);
 }
 
 // =============================================================
@@ -213,7 +232,8 @@ function vizinhoMaisProximoMelhorado(locais) {
 // =============================================================
 
 function doisOpt(rotaInicial, maxIteracoes = 100) {
-  if (!rotaInicial || rotaInicial.length <= 3) return rotaInicial;
+  if (!rotaInicial || rotaInicial.length === 0) return [];
+  if (rotaInicial.length <= 3) return rotaInicial;
 
   let melhorRota = [...rotaInicial];
   let melhorado = true;
@@ -234,6 +254,7 @@ function doisOpt(rotaInicial, maxIteracoes = 100) {
         const nova = distancia(a, c) + distancia(b, d);
 
         if (nova < atual) {
+          // Reverter o segmento entre i+1 e k
           const novaRota = [...melhorRota];
           let left = i + 1;
           let right = k;
@@ -259,26 +280,26 @@ function doisOpt(rotaInicial, maxIteracoes = 100) {
 // =============================================================
 
 function calcularRotaTSP(locais, options = {}) {
+  // Validação de entrada
   if (!locais || locais.length === 0) return [];
   if (locais.length === 1) return [locais[0]];
   if (locais.length === 2) return [locais[0], locais[1]];
 
   const { forceHeuristic = false } = options;
 
+  // Usar Held-Karp para n ≤ 10 (exato)
   if (!forceHeuristic && locais.length <= 10) {
-    try {
-      return heldKarp(locais);
-    } catch (e) {
-      return vizinhoMaisProximoMelhorado(locais);
-    }
+    return heldKarp(locais);
   }
 
+  // Heurística para n > 10
   let rota = vizinhoMaisProximoMelhorado(locais);
   rota = doisOpt(rota, 50);
   return rota;
 }
 
 function calcularRotaTSPComDetalhes(locais) {
+  // Validação de entrada
   if (!locais || locais.length === 0) {
     return {
       rota: [],

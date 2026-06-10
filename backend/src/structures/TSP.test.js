@@ -283,3 +283,126 @@ describe('TSP - Testes de Contrato (Endpoint)', () => {
     expect(idsRota).toContain('ponto2');
   });
 });
+
+describe('TSP - Testes de Cobertura Adicional', () => {
+
+  it('vizinhoMaisProximoMelhorado deve funcionar com array vazio', () => {
+    const resultado = vizinhoMaisProximoMelhorado([]);
+    expect(resultado).toEqual([]);
+  });
+
+  it('vizinhoMaisProximoMelhorado deve funcionar com 1 ponto', () => {
+    const pontos = [{ id: "A", x: 0, y: 0 }];
+    const resultado = vizinhoMaisProximoMelhorado(pontos);
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0].id).toBe("A");
+  });
+
+  it('vizinhoMaisProximoMelhorado deve funcionar com 2 pontos', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 }
+    ];
+    const resultado = vizinhoMaisProximoMelhorado(pontos);
+    expect(resultado).toHaveLength(2);
+  });
+
+  it('doisOpt deve funcionar com array vazio', () => {
+    const resultado = doisOpt([]);
+    expect(resultado).toEqual([]);
+  });
+
+  it('doisOpt deve funcionar com 1 ponto', () => {
+    const pontos = [{ id: "A", x: 0, y: 0 }];
+    const resultado = doisOpt(pontos);
+    expect(resultado).toHaveLength(1);
+  });
+
+  it('doisOpt deve funcionar com 2 pontos', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 }
+    ];
+    const resultado = doisOpt(pontos);
+    expect(resultado).toHaveLength(2);
+  });
+
+  it('doisOpt deve funcionar com 3 pontos (não modifica)', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 },
+      { id: "C", x: 5, y: 10 }
+    ];
+    const resultado = doisOpt(pontos);
+    expect(resultado).toHaveLength(3);
+  });
+
+  it('heldKarp deve funcionar com n=3', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 },
+      { id: "C", x: 5, y: 10 }
+    ];
+    const resultado = heldKarp(pontos);
+    expect(resultado).toHaveLength(3);
+  });
+
+  it('calcularRotaTSP com forceHeuristic para n=3 deve usar heurística', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 },
+      { id: "C", x: 5, y: 10 }
+    ];
+    const resultado = calcularRotaTSP(pontos, { forceHeuristic: true });
+    expect(resultado).toHaveLength(3);
+  });
+
+  it('calcularRotaTSPComDetalhes com array vazio deve retornar estrutura correta', () => {
+    const resultado = calcularRotaTSPComDetalhes([]);
+    expect(resultado.rota).toEqual([]);
+    expect(resultado.idsRota).toEqual([]);
+    expect(resultado.distanciaTotal).toBe(0);
+    expect(resultado.numPontos).toBe(0);
+    expect(resultado.algoritmo).toBe("Nenhum");
+    expect(resultado.tempoExecucaoMs).toBe(0);
+  });
+
+  it('calcularRotaTSPComDetalhes com null deve retornar estrutura correta', () => {
+    const resultado = calcularRotaTSPComDetalhes(null);
+    expect(resultado.rota).toEqual([]);
+    expect(resultado.idsRota).toEqual([]);
+    expect(resultado.distanciaTotal).toBe(0);
+    expect(resultado.numPontos).toBe(0);
+    expect(resultado.algoritmo).toBe("Nenhum");
+    expect(resultado.tempoExecucaoMs).toBe(0);
+  });
+
+  it('distancia com parâmetros undefined deve retornar 0', () => {
+    expect(distancia(null, null)).toBe(0);
+    expect(distancia(undefined, undefined)).toBe(0);
+    expect(distancia({ x: 0, y: 0 }, null)).toBe(0);
+  });
+
+  it('comprimentoRota com rota de 1 ponto deve retornar 0', () => {
+    const pontos = [{ id: "A", x: 0, y: 0 }];
+    expect(comprimentoRota(pontos)).toBe(0);
+  });
+
+  it('validarRota com parâmetros inválidos deve retornar false', () => {
+    expect(validarRota(null, [])).toBe(false);
+    expect(validarRota([], null)).toBe(false);
+    expect(validarRota([], [])).toBe(true);  // Listas vazias são consideradas válidas
+    expect(validarRota(null, null)).toBe(false);
+  });
+
+  it('vizinhoMaisProximo com array vazio deve retornar []', () => {
+    expect(vizinhoMaisProximo([])).toEqual([]);
+  });
+
+  it('vizinhoMaisProximo com 1 ponto deve retornar o ponto', () => {
+    const pontos = [{ id: "A", x: 0, y: 0 }];
+    const resultado = vizinhoMaisProximo(pontos);
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0].id).toBe("A");
+  });
+});
