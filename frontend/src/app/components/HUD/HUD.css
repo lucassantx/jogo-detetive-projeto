@@ -1,25 +1,220 @@
-/* TODO Dev 4 — Sprint 1
-   Estilos do HUD, inventário, notificação deslizante e indicadores de cor
-   Usar variáveis do theme.css
-*/
-
 .hud {
-  /* TODO */
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 240px;
+  height: 100vh;
+  background: #1a1208;
+  border-left: 2px solid #3a2c1a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
 }
+
+/* ── XP e level ─────────────────────────────────────────────────────────── */
+
+.hud-xp {
+  padding: 1rem;
+  border-bottom: 1px solid #3a2c1a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hud-level {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.level-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #7a6040;
+}
+
+.level-valor {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #d4a853;
+}
+
+.xp-barra-fundo {
+  width: 100%;
+  height: 6px;
+  background: #2a1f0e;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.xp-barra-preenchimento {
+  height: 100%;
+  background: #d4a853;
+  border-radius: 3px;
+  transition: width 500ms ease-out;
+}
+
+.xp-texto {
+  font-size: 0.75rem;
+  color: #7a6040;
+  text-align: right;
+}
+
+/* ── badge level up ─────────────────────────────────────────────────────── */
+
+.levelup-badge {
+  position: absolute;
+  top: 70px;
+  right: 0;
+  left: 0;
+  text-align: center;
+  background: #d4a853;
+  color: #1a1208;
+  font-weight: bold;
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  padding: 0.4rem;
+  animation: levelup-flash 2s ease-in-out forwards;
+  z-index: 200;
+}
+
+@keyframes levelup-flash {
+  0%   { opacity: 0; transform: scale(0.8); }
+  15%  { opacity: 1; transform: scale(1.05); }
+  80%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* ── inventário ─────────────────────────────────────────────────────────── */
 
 .inventario {
-  /* TODO */
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: #3a2c1a #1a1208;
 }
+
+.inventario-titulo {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #7a6040;
+  margin: 0 0 0.75rem 0;
+}
+
+.inventario-vazio {
+  font-size: 0.8rem;
+  color: #5a4a30;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.inventario-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── pista card ─────────────────────────────────────────────────────────── */
 
 .pista-card {
-  /* TODO */
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  transition: transform 0.15s;
 }
 
-.pista-card--alta    { /* peso >= 9 — vermelho */ }
-.pista-card--media   { /* peso 7-8  — amarelo  */ }
-.pista-card--baixa   { /* peso < 7  — verde    */ }
+.pista-card:hover {
+  transform: translateX(-2px);
+}
 
-/* Notificação deslizante */
+.pista-card--alta  { background: #2a0a0a; border-left-color: #e05555; }
+.pista-card--media { background: #2a2000; border-left-color: #d4a853; }
+.pista-card--baixa { background: #0a2a0a; border-left-color: #4a9a4a; }
+
+.pista-card-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pista-nome {
+  font-size: 0.8rem;
+  color: #e8d5a3;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.pista-peso {
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.pista-card--alta   .pista-peso { color: #e05555; }
+.pista-card--media  .pista-peso { color: #d4a853; }
+.pista-card--baixa  .pista-peso { color: #4a9a4a; }
+
+.pista-descricao {
+  font-size: 0.72rem;
+  color: #7a6040;
+  margin: 0.3rem 0 0;
+  line-height: 1.4;
+}
+
+/* ── notificações ───────────────────────────────────────────────────────── */
+
+.notificacoes-container {
+  position: fixed;
+  right: 250px;
+  bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 300;
+  pointer-events: none;
+}
+
 .pista-notification {
-  /* TODO — animação slide-in da direita */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border-left: 4px solid transparent;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  animation: slide-in 0.3s ease-out, slide-out 0.3s ease-in 2.7s forwards;
+  min-width: 200px;
+}
+
+.notificacao--alta  { background: #2a0a0a; border-left-color: #e05555; }
+.notificacao--media { background: #2a2000; border-left-color: #d4a853; }
+.notificacao--baixa { background: #0a2a0a; border-left-color: #4a9a4a; }
+
+.notificacao-icone { font-size: 1.2rem; color: #d4a853; }
+
+.notificacao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.notificacao-nome { font-size: 0.85rem; font-weight: bold; color: #e8d5a3; }
+.notificacao-peso { font-size: 0.75rem; color: #7a6040; }
+
+@keyframes slide-in {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes slide-out {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(120%); opacity: 0; }
 }

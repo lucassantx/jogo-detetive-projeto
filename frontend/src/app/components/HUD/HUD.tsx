@@ -1,20 +1,86 @@
-// TODO Dev 4 — Sprint 1
-// HUD (Heads-Up Display): exibe XP, inventário de pistas e botão "Sugerir rota"
-//
-// Elementos:
-//   - XP atual do jogador (atualiza em tempo real)
-//   - Lista de pistas coletadas, ordenadas por peso (reflexo do MaxHeap)
-//   - Indicador de cor: peso ≥ 9 → vermelho | 7–8 → amarelo | < 7 → verde
-//   - Card de notificação deslizante ao coletar pista (Issue #5)
-//   - Botão "Sugerir rota" → chama GET /api/partida/:id/rota (Issue #8)
-//
-// Ver store/gameStore.ts para estado global
-
+import { useEffect, useRef, useState } from 'react';
 import React from 'react';
+import { useGameStore, Notificacao } from '../../store/gameStore';
+import Inventario from './Inventario';
+import './HUD.css';
 
-const HUD: React.FC = () => {
-  // TODO
-  return <div className="hud">{ /* TODO */ }</div>;
+const XP_POR_LEVEL = 100;
+
+const corNotificacao = (peso: number) => {
+  if (peso >= 9) return 'notificacao--alta';
+  if (peso >= 7) return 'notificacao--media';
+  return 'notificacao--baixa';
+};
+
+const NotificacaoCard = ({ notif }: { notif: Notificacao }) => {
+  const remover = useGameStore(s => s.removerNotificacao);
+
+  useEffect(() => {
+    const t = setTimeout(() => remover(notif.id), 3000);
+    return () => clearTimeout(t);
+  }, [notif.id, remover]);
+
+  return (
+    <div className={`pista-notification ${corNotificacao(notif.peso)}`} role="alert">
+      <span className="notificacao-icone">✦</span>
+      <div className="notificacao-texto">
+        <span className="notificacao-nome">{notif.nome}</span>
+        <span className="notificacao-peso">Peso: {notif.peso}</span>
+      </div>
+    </div>
+  );
+};
+
+const HUD = () => {
+  const xp           = useGameStore(s => s.xp);
+  const notificacoes = useGameStore(s => s.notificacoes);
+
+  const level      = Math.floor(xp / XP_POR_LEVEL) + 1;
+  const xpNoLevel  = xp % XP_POR_LEVEL;
+  const percentXP  = (xpNoLevel / XP_POR_LEVEL) * 100;
+
+  const [mostrarLevelUp, setMostrarLevelUp] = useState(false);
+  const levelAnterior = useRef(level);
+
+  useEffect(() => {
+    if (level > levelAnterior.current) {
+      setMostrarLevelUp(true);
+      const t = setTimeout(() => setMostrarLevelUp(false), 2000);
+      levelAnterior.current = level;
+      return () => clearTimeout(t);
+    }
+    levelAnterior.current = level;
+  }, [level]);
+
+  return (
+    <div className="hud">
+      {/* ── XP e level ─────────────────────────────────────────────────── */}
+      <div className="hud-xp">
+        <div className="hud-level">
+          <span className="level-label">Nível</span>
+          <span className="level-valor">{level}</span>
+        </div>
+        <div className="xp-barra-fundo">
+          <div className="xp-barra-preenchimento" style={{ width: `${percentXP}%` }} />
+        </div>
+        <span className="xp-texto">{xpNoLevel} / {XP_POR_LEVEL} XP</span>
+      </div>
+
+      {mostrarLevelUp && (
+        <div className="levelup-badge" role="alert">LEVEL UP!</div>
+      )}
+
+      {/* ── inventário ──────────────────────────────────────────────────── */}
+      <Inventario />
+
+      {/* ── notificações deslizantes ────────────────────────────────────── */}
+      <div className="notificacoes-container">
+        {notificacoes.map(n => (
+          <NotificacaoCard key={n.id} notif={n} />
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default HUD;
