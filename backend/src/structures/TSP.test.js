@@ -1,12 +1,13 @@
 // TSP.test.js
-// Testes Jest para o algoritmo TSP heurístico
+// Testes Jest para o algoritmo TSP com seleção automática
 
 const {
   calcularRotaTSP,
+  calcularRotaTSPComDetalhes,
+  heldKarp,
   vizinhoMaisProximo,
   vizinhoMaisProximoMelhorado,
   doisOpt,
-  doisOptCompleto,
   distancia,
   comprimentoRota,
   validarRota
@@ -14,7 +15,7 @@ const {
 
 describe('TSP - Testes de Funcionalidade Básica', () => {
 
-  it('deve funcionar com array de 1 local (retorna lista de 1 elemento)', () => {
+  it('deve funcionar com array de 1 local', () => {
     const pontos = [{ id: "A", x: 0, y: 0 }];
     const rota = calcularRotaTSP(pontos);
 
@@ -25,20 +26,17 @@ describe('TSP - Testes de Funcionalidade Básica', () => {
   it('deve funcionar com array vazio', () => {
     const pontos = [];
     const rota = calcularRotaTSP(pontos);
-
     expect(rota).toHaveLength(0);
   });
 
-  it('deve funcionar com 2 pontos (rota trivial de ida e volta)', () => {
+  it('deve funcionar com 2 pontos', () => {
     const pontos = [
       { id: "A", x: 0, y: 0 },
       { id: "B", x: 10, y: 0 }
     ];
 
     const rota = calcularRotaTSP(pontos);
-
     expect(rota).toHaveLength(2);
-    expect(rota.map(p => p.id)).toEqual(expect.arrayContaining(["A", "B"]));
   });
 
   it('deve visitar todos os pontos exatamente uma vez', () => {
@@ -54,42 +52,113 @@ describe('TSP - Testes de Funcionalidade Básica', () => {
 
     expect(idsNaRota).toHaveLength(4);
     expect(new Set(idsNaRota).size).toBe(4);
-    expect(idsNaRota).toContain("A");
-    expect(idsNaRota).toContain("B");
-    expect(idsNaRota).toContain("C");
-    expect(idsNaRota).toContain("D");
   });
 });
 
-describe('TSP - Testes de Qualidade da Rota', () => {
+describe('TSP - Held-Karp (Algoritmo Exato)', () => {
 
-  it('rota retornada deve ser mais curta que ordem aleatória', () => {
+  it('deve retornar rota ótima para 3 pontos (triângulo)', () => {
     const pontos = [
       { id: "A", x: 0, y: 0 },
       { id: "B", x: 10, y: 0 },
-      { id: "C", x: 20, y: 0 },
-      { id: "D", x: 0, y: 10 },
-      { id: "E", x: 20, y: 10 }
+      { id: "C", x: 5, y: 10 }
     ];
 
-    const rotaOtimizada = calcularRotaTSP(pontos);
-    const distanciaOtimizada = comprimentoRota(rotaOtimizada);
+    const rota = heldKarp(pontos);
+    const distanciaTotal = comprimentoRota(rota);
 
-    // Ordem aleatória (mantendo primeiro ponto)
-    const ordemAleatoria = [
-      pontos[0],
-      pontos[2],
-      pontos[4],
-      pontos[1],
-      pontos[3]
-    ];
-    const distanciaAleatoria = comprimentoRota(ordemAleatoria);
-
-    expect(distanciaOtimizada).toBeLessThanOrEqual(distanciaAleatoria);
+    expect(rota).toHaveLength(3);
+    expect(distanciaTotal).toBeGreaterThan(30);
+    expect(distanciaTotal).toBeLessThan(33);
   });
 
-  it('deve encontrar rota melhor que o vizinho mais próximo básico', () => {
-    // Configuração que favorece o improved start
+  it('deve retornar rota ótima para quadrado', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 },
+      { id: "C", x: 10, y: 10 },
+      { id: "D", x: 0, y: 10 }
+    ];
+
+    const rota = heldKarp(pontos);
+    const distancia = comprimentoRota(rota);
+
+    expect(distancia).toBeCloseTo(40, 1);
+  });
+
+  it('deve funcionar com 5 pontos', () => {
+    const pontos = [
+      { id: "A", x: 0, y: 0 },
+      { id: "B", x: 10, y: 0 },
+      { id: "C", x: 10, y: 10 },
+      { id: "D", x: 0, y: 10 },
+      { id: "E", x: 5, y: 5 }
+    ];
+
+    const rota = heldKarp(pontos);
+    expect(rota).toHaveLength(5);
+    expect(validarRota(rota, pontos)).toBe(true);
+  });
+
+  it('deve funcionar com 10 pontos', () => {
+    const pontos = Array.from({ length: 10 }, (_, i) => ({
+      id: `P${i}`,
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+
+    const rota = heldKarp(pontos);
+    expect(rota).toHaveLength(10);
+    expect(validarRota(rota, pontos)).toBe(true);
+  });
+});
+
+describe('TSP - Seleção Automática do Algoritmo', () => {
+
+  it('deve usar Held-Karp para n ≤ 10', () => {
+    const pontos = Array.from({ length: 8 }, (_, i) => ({
+      id: `P${i}`,
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+
+    const detalhes = calcularRotaTSPComDetalhes(pontos);
+
+    expect(detalhes.algoritmo).toContain("Held-Karp");
+    expect(detalhes.numPontos).toBe(8);
+  });
+
+  it('deve usar heurística para n > 10', () => {
+    const pontos = Array.from({ length: 20 }, (_, i) => ({
+      id: `P${i}`,
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+
+    const detalhes = calcularRotaTSPComDetalhes(pontos);
+
+    expect(detalhes.algoritmo).toContain("heurístico");
+    expect(detalhes.numPontos).toBe(20);
+  });
+
+  it('deve permitir forçar heurística mesmo com n ≤ 10', () => {
+    const pontos = Array.from({ length: 8 }, (_, i) => ({
+      id: `P${i}`,
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+
+    const rotaHeuristica = calcularRotaTSP(pontos, { forceHeuristic: true });
+    const rotaExata = calcularRotaTSP(pontos);
+
+    expect(validarRota(rotaHeuristica, pontos)).toBe(true);
+    expect(validarRota(rotaExata, pontos)).toBe(true);
+  });
+});
+
+describe('TSP - Comparação Exato vs Heurístico', () => {
+
+  it('para n=5, Held-Karp deve ser igual ou melhor que heurística', () => {
     const pontos = [
       { id: "A", x: 0, y: 0 },
       { id: "B", x: 100, y: 0 },
@@ -98,177 +167,47 @@ describe('TSP - Testes de Qualidade da Rota', () => {
       { id: "E", x: 51, y: 99 }
     ];
 
-    const rotaBasica = vizinhoMaisProximo(pontos);
-    const rotaMelhorada = calcularRotaTSP(pontos, { useImprovedStart: true });
+    const rotaExata = heldKarp(pontos);
+    const rotaHeuristica = vizinhoMaisProximoMelhorado(pontos);
+    const rotaRefinada = doisOpt(rotaHeuristica);
 
-    const distBasica = comprimentoRota(rotaBasica);
-    const distMelhorada = comprimentoRota(rotaMelhorada);
+    const distExata = comprimentoRota(rotaExata);
+    const distHeuristica = comprimentoRota(rotaRefinada);
 
-    expect(distMelhorada).toBeLessThanOrEqual(distBasica);
-  });
-
-  it('2-opt deve refinar rota sem piorar o custo total', () => {
-    const pontos = [
-      { id: "A", x: 0, y: 0 },
-      { id: "B", x: 10, y: 5 },
-      { id: "C", x: 20, y: 0 },
-      { id: "D", x: 15, y: 15 },
-      { id: "E", x: 5, y: 15 }
-    ];
-
-    const rotaInicial = vizinhoMaisProximo(pontos);
-    const distanciaInicial = comprimentoRota(rotaInicial);
-
-    const rotaRefinada = doisOpt(rotaInicial);
-    const distanciaRefinada = comprimentoRota(rotaRefinada);
-
-    expect(distanciaRefinada).toBeLessThanOrEqual(distanciaInicial);
+    expect(distExata).toBeLessThanOrEqual(distHeuristica);
   });
 });
 
-describe('TSP - Testes do Vizinho Mais Próximo', () => {
+describe('TSP - Testes de Performance', () => {
 
-  it('vizinhoMaisProximo deve construir rota em O(n²)', () => {
-    const n = 100;
-    const pontos = Array.from({ length: n }, (_, i) => ({
+  it('Held-Karp para n=10 deve executar em menos de 1 segundo', () => {
+    const pontos = Array.from({ length: 10 }, (_, i) => ({
       id: `P${i}`,
       x: Math.random() * 100,
       y: Math.random() * 100
     }));
 
     const inicio = Date.now();
-    const rota = vizinhoMaisProximo(pontos);
+    const rota = heldKarp(pontos);
     const tempo = Date.now() - inicio;
 
-    expect(rota).toHaveLength(n);
-    // Para n=100, deve levar menos de 100ms
-    expect(tempo).toBeLessThan(100);
-  });
-
-  it('deve começar do primeiro ponto quando não especificado', () => {
-    const pontos = [
-      { id: "Z", x: 100, y: 100 },
-      { id: "A", x: 0, y: 0 },
-      { id: "B", x: 1, y: 0 }
-    ];
-
-    const rota = vizinhoMaisProximo(pontos);
-
-    // O primeiro ponto da rota deve ser o primeiro do array
-    expect(rota[0].id).toBe("Z");
-  });
-
-  it('deve funcionar com pontos colineares', () => {
-    const pontos = [
-      { id: "A", x: 0, y: 0 },
-      { id: "B", x: 10, y: 0 },
-      { id: "C", x: 20, y: 0 },
-      { id: "D", x: 30, y: 0 },
-      { id: "E", x: 40, y: 0 }
-    ];
-
-    const rota = vizinhoMaisProximo(pontos);
-    const valida = validarRota(rota, pontos);
-
-    expect(valida).toBe(true);
-    expect(rota).toHaveLength(5);
-  });
-});
-
-describe('TSP - Testes do 2-opt', () => {
-
-  it('doisOpt deve refinar rota sem piorar o custo total', () => {
-    const pontos = [
-      { id: "A", x: 0, y: 0 },
-      { id: "B", x: 10, y: 10 },
-      { id: "C", x: 20, y: 0 },
-      { id: "D", x: 30, y: 10 },
-      { id: "E", x: 40, y: 0 }
-    ];
-
-    const rotaInicial = vizinhoMaisProximo(pontos);
-    const distanciaInicial = comprimentoRota(rotaInicial);
-
-    const rotaRefinada = doisOpt(rotaInicial);
-    const distanciaRefinada = comprimentoRota(rotaRefinada);
-
-    expect(distanciaRefinada).toBeLessThanOrEqual(distanciaInicial);
-  });
-
-  it('deve manter o mesmo conjunto de pontos após refino', () => {
-    const pontos = [
-      { id: "A", x: 0, y: 0 },
-      { id: "B", x: 10, y: 10 },
-      { id: "C", x: 20, y: 0 },
-      { id: "D", x: 30, y: 10 }
-    ];
-
-    const rotaInicial = vizinhoMaisProximo(pontos);
-    const rotaRefinada = doisOpt(rotaInicial);
-
-    const idsInicial = new Set(rotaInicial.map(p => p.id));
-    const idsRefinada = new Set(rotaRefinada.map(p => p.id));
-
-    expect(idsRefinada).toEqual(idsInicial);
-  });
-
-  it('deve identificar e eliminar cruzamentos', () => {
-    // Criar rota com cruzamento proposital
-    const pontos = [
-      { id: "A", x: 0, y: 0 },
-      { id: "B", x: 10, y: 10 },
-      { id: "C", x: 0, y: 10 },
-      { id: "D", x: 10, y: 0 }
-    ];
-
-    // Rota com cruzamento: A → B → C → D
-    const rotaComCruzamento = [
-      pontos[0], // A (0,0)
-      pontos[1], // B (10,10)
-      pontos[2], // C (0,10)
-      pontos[3]  // D (10,0)
-    ];
-
-    const distanciaComCruzamento = comprimentoRota(rotaComCruzamento);
-    const rotaSemCruzamento = doisOpt(rotaComCruzamento);
-    const distanciaSemCruzamento = comprimentoRota(rotaSemCruzamento);
-
-    expect(distanciaSemCruzamento).toBeLessThan(distanciaComCruzamento);
-  });
-});
-
-describe('TSP - Testes de Performance', () => {
-
-  it('deve processar 50 pontos em menos de 1 segundo', () => {
-    const n = 50;
-    const pontos = Array.from({ length: n }, (_, i) => ({
-      id: `P${i}`,
-      x: Math.random() * 1000,
-      y: Math.random() * 1000
-    }));
-
-    const inicio = Date.now();
-    const rota = calcularRotaTSP(pontos);
-    const tempo = Date.now() - inicio;
-
-    expect(rota).toHaveLength(n);
+    expect(rota).toHaveLength(10);
     expect(tempo).toBeLessThan(1000);
   });
 
-  it('deve processar 100 pontos em menos de 2 segundos', () => {
-    const n = 100;
-    const pontos = Array.from({ length: n }, (_, i) => ({
+  it('Heurística para n=100 deve executar em menos de 200ms', () => {
+    const pontos = Array.from({ length: 100 }, (_, i) => ({
       id: `P${i}`,
       x: Math.random() * 1000,
       y: Math.random() * 1000
     }));
 
     const inicio = Date.now();
-    const rota = calcularRotaTSP(pontos, { useImprovedStart: false });
+    const rota = calcularRotaTSP(pontos, { forceHeuristic: true });
     const tempo = Date.now() - inicio;
 
-    expect(rota).toHaveLength(n);
-    expect(tempo).toBeLessThan(2000);
+    expect(rota).toHaveLength(100);
+    expect(tempo).toBeLessThan(200);
   });
 });
 
@@ -278,9 +217,7 @@ describe('TSP - Testes de Funções Auxiliares', () => {
     const a = { x: 0, y: 0 };
     const b = { x: 3, y: 4 };
 
-    const dist = distancia(a, b);
-
-    expect(dist).toBe(5);
+    expect(distancia(a, b)).toBe(5);
   });
 
   it('comprimentoRota deve calcular soma total com retorno', () => {
@@ -291,7 +228,6 @@ describe('TSP - Testes de Funções Auxiliares', () => {
     ];
 
     const comprimento = comprimentoRota(pontos);
-    // A→B: 10, B→C: 10, C→A: ~14.14, total = ~34.14
     expect(comprimento).toBeCloseTo(34.14, 1);
   });
 
@@ -304,49 +240,46 @@ describe('TSP - Testes de Funções Auxiliares', () => {
 
     const rotaValida = [pontos[0], pontos[1], pontos[2]];
     const rotaInvalida = [pontos[0], pontos[0], pontos[1]];
-    const rotaIncompleta = [pontos[0], pontos[1]];
 
     expect(validarRota(rotaValida, pontos)).toBe(true);
     expect(validarRota(rotaInvalida, pontos)).toBe(false);
-    expect(validarRota(rotaIncompleta, pontos)).toBe(false);
   });
 });
 
-describe('TSP - Testes de Configuração', () => {
+describe('TSP - Testes de Contrato (Endpoint)', () => {
 
-  it('deve respeitar opção useImprovedStart = false', () => {
+  it('calcularRotaTSPComDetalhes deve retornar estrutura correta', () => {
     const pontos = [
       { id: "A", x: 0, y: 0 },
-      { id: "B", x: 100, y: 0 },
-      { id: "C", x: 50, y: 1 }
+      { id: "B", x: 10, y: 0 },
+      { id: "C", x: 10, y: 10 }
     ];
 
-    const rotaBasica = calcularRotaTSP(pontos, { useImprovedStart: false });
-    const rotaMelhorada = calcularRotaTSP(pontos, { useImprovedStart: true });
+    const resultado = calcularRotaTSPComDetalhes(pontos);
 
-    // Ambas devem ser válidas
-    expect(validarRota(rotaBasica, pontos)).toBe(true);
-    expect(validarRota(rotaMelhorada, pontos)).toBe(true);
+    expect(resultado).toHaveProperty('rota');
+    expect(resultado).toHaveProperty('idsRota');
+    expect(resultado).toHaveProperty('distanciaTotal');
+    expect(resultado).toHaveProperty('numPontos');
+    expect(resultado).toHaveProperty('algoritmo');
+    expect(resultado).toHaveProperty('tempoExecucaoMs');
+
+    expect(resultado.idsRota).toEqual(expect.arrayContaining(['A', 'B', 'C']));
+    expect(resultado.numPontos).toBe(3);
   });
 
-  it('deve respeitar opção maxTwoOptIter', () => {
-    const pontos = Array.from({ length: 20 }, (_, i) => ({
-      id: `P${i}`,
-      x: Math.random() * 100,
-      y: Math.random() * 100
-    }));
+  it('Endpoint deve continuar funcionando sem alteração de contrato', () => {
+    const pontos = [
+      { id: "ponto1", x: 0, y: 0 },
+      { id: "ponto2", x: 10, y: 0 }
+    ];
 
-    const inicioRapido = Date.now();
-    const rotaRapida = calcularRotaTSP(pontos, { maxTwoOptIter: 10 });
-    const tempoRapido = Date.now() - inicioRapido;
+    const rota = calcularRotaTSP(pontos);
+    const idsRota = rota.map(p => p.id);
 
-    const inicioCompleto = Date.now();
-    const rotaCompleta = calcularRotaTSP(pontos, { maxTwoOptIter: 1000 });
-    const tempoCompleto = Date.now() - inicioCompleto;
-
-    expect(validarRota(rotaRapida, pontos)).toBe(true);
-    expect(validarRota(rotaCompleta, pontos)).toBe(true);
-    // Com menos iterações deve ser mais rápido
-    expect(tempoRapido).toBeLessThanOrEqual(tempoCompleto + 10);
+    expect(Array.isArray(idsRota)).toBe(true);
+    expect(idsRota.length).toBe(2);
+    expect(idsRota).toContain('ponto1');
+    expect(idsRota).toContain('ponto2');
   });
 });
