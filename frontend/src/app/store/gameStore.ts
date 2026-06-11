@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 
-// ─── Tipos exportados (contrato compartilhado com Dev 4) ──────────────────────
-
 export interface Pista {
   id: string;
   nome: string;
@@ -60,9 +58,8 @@ interface GameState {
   fecharDialogo: () => void;
   avancarDialogo: (proximoId: string | null, xp: number, pistaBloqueada: string | null) => void;
   removerNotificacao: (id: string) => void;
+  setStatusJogo: (status: StatusJogo) => void;
 }
-
-// ─── BFS local (espelha backend/src/structures/BFS.js — integrar na Sprint 2) ─
 
 function bfsReveal(pos: { x: number; y: number }, raio = 3): { x: number; y: number }[] {
   const resultado: { x: number; y: number }[] = [];
@@ -85,9 +82,6 @@ function bfsReveal(pos: { x: number; y: number }, raio = 3): { x: number; y: num
   return resultado;
 }
 
-// ─── Mock data — Sprint 1 (substituir por chamadas de API na Sprint 2) ─────────
-// Posições e pesos conforme backend/src/seed/pistas.js
-
 const PISTAS_MOCK: Pista[] = [
   { id: 'frasco_arsenico',  nome: 'Frasco de arsênico vazio',   descricao: 'Frasco de vidro com resíduos de arsênico.',   peso: 10, celula: { x: 1, y: 1 }, coletada: false },
   { id: 'carta_anonima',    nome: 'Carta anônima rasgada',      descricao: 'Pedaços de carta com letra disfarçada.',       peso: 8,  celula: { x: 1, y: 0 }, coletada: false },
@@ -107,83 +101,41 @@ const NPCS_MOCK: NPC[] = [
   { id: 'fynn',     nome: 'Fynn (Guarda)',    celula: { x: 7, y: 7 }, dialogoInicial: 'C0' },
 ];
 
-// Nós conforme backend/src/seed/dialogos.js (A0-A2, B0-B3, C0-C1)
 const DIALOGOS_MOCK: Record<string, NoDialogo> = {
-  A0: {
-    id: 'A0', npc: 'Adelaide Cross',
-    texto: 'Eu estava na biblioteca toda a tarde, como sempre. Nunca saio desta sala antes do jantar.',
+  A0: { id: 'A0', npc: 'Adelaide Cross', texto: 'Eu estava na biblioteca toda a tarde, como sempre. Nunca saio desta sala antes do jantar.',
     escolhas: [
-      { texto: 'O que sabe sobre a morte de Blackwood?', proximoId: 'A1',  pistaBloqueada: null,          xp: 10 },
-      { texto: 'Notou algo estranho ultimamente?',       proximoId: 'A2',  pistaBloqueada: null,          xp: 10 },
-    ],
-  },
-  A1: {
-    id: 'A1', npc: 'Adelaide Cross',
-    texto: 'Blackwood? Morreu? Isso é… chocante. Vi uma carta rasgada perto da escrivaninha dele ontem.',
+      { texto: 'O que sabe sobre a morte de Blackwood?', proximoId: 'A1',  pistaBloqueada: null,           xp: 10 },
+      { texto: 'Notou algo estranho ultimamente?',       proximoId: 'A2',  pistaBloqueada: null,           xp: 10 },
+    ] },
+  A1: { id: 'A1', npc: 'Adelaide Cross', texto: 'Blackwood? Morreu? Isso é… chocante. Vi uma carta rasgada perto da escrivaninha dele ontem.',
     escolhas: [
-      { texto: 'Quando foi a última vez que o viu?', proximoId: 'A1b', pistaBloqueada: null,          xp: 10 },
+      { texto: 'Quando foi a última vez que o viu?', proximoId: 'A1b', pistaBloqueada: null,           xp: 10 },
       { texto: 'Ele tinha inimigos na família?',     proximoId: 'A1a', pistaBloqueada: 'carta_anonima', xp: 15 },
-    ],
-  },
-  A1a: {
-    id: 'A1a', npc: 'Adelaide Cross',
-    texto: 'Victor sempre cobrou sua parte da herança com muita insistência. Havia brigas constantes.',
-    escolhas: [],
-  },
-  A1b: {
-    id: 'A1b', npc: 'Adelaide Cross',
-    texto: 'No café da manhã. Ele parecia nervoso — tomou o chá mas mal tocou na comida.',
-    escolhas: [],
-  },
-  A2: {
-    id: 'A2', npc: 'Adelaide Cross',
-    texto: 'Esta casa sempre teve seus segredos. Ultimamente o Victor entra e sai da estufa à noite.',
-    escolhas: [],
-  },
-  B0: {
-    id: 'B0', npc: 'Victor Blackwood',
-    texto: 'Não tenho nada a dizer ao senhor. Quem o mandou aqui?',
+    ] },
+  A1a: { id: 'A1a', npc: 'Adelaide Cross', texto: 'Victor sempre cobrou sua parte da herança com muita insistência. Havia brigas constantes.', escolhas: [] },
+  A1b: { id: 'A1b', npc: 'Adelaide Cross', texto: 'No café da manhã. Ele parecia nervoso — tomou o chá mas mal tocou na comida.', escolhas: [] },
+  A2:  { id: 'A2',  npc: 'Adelaide Cross', texto: 'Esta casa sempre teve seus segredos. Ultimamente o Victor entra e sai da estufa à noite.', escolhas: [] },
+  B0: { id: 'B0', npc: 'Victor Blackwood', texto: 'Não tenho nada a dizer ao senhor. Quem o mandou aqui?',
     escolhas: [
-      { texto: 'Estou investigando a morte de seu tio.',  proximoId: 'B1', pistaBloqueada: null, xp: 10 },
+      { texto: 'Estou investigando a morte de seu tio.',    proximoId: 'B1', pistaBloqueada: null, xp: 10 },
       { texto: 'Vi seu nome no testamento com uma rasura.', proximoId: 'B2', pistaBloqueada: null, xp: 15 },
-    ],
-  },
-  B1: {
-    id: 'B1', npc: 'Victor Blackwood',
-    texto: 'Morte acidental. Ele bebia, já estava doente. Não há mistério aqui.',
+    ] },
+  B1: { id: 'B1', npc: 'Victor Blackwood', texto: 'Morte acidental. Ele bebia, já estava doente. Não há mistério aqui.',
     escolhas: [
-      { texto: 'E o testamento com rasura?',  proximoId: 'B2', pistaBloqueada: null, xp: 20 },
-      { texto: 'Onde estava ontem à noite?',  proximoId: 'B3', pistaBloqueada: null, xp: 10 },
-    ],
-  },
-  B2: {
-    id: 'B2', npc: 'Victor Blackwood',
-    texto: 'Esse testamento é invenção sua! Meu tio me deixaria tudo — como sempre prometeu!',
-    escolhas: [],
-  },
-  B3: {
-    id: 'B3', npc: 'Victor Blackwood',
-    texto: 'No escritório. Trabalhando. Como sempre.',
-    escolhas: [],
-  },
-  C0: {
-    id: 'C0', npc: 'Fynn (Guarda)',
-    texto: 'Eu… eu não devia falar. Mas vi algo naquela noite que não me sai da cabeça.',
+      { texto: 'E o testamento com rasura?', proximoId: 'B2', pistaBloqueada: null, xp: 20 },
+      { texto: 'Onde estava ontem à noite?', proximoId: 'B3', pistaBloqueada: null, xp: 10 },
+    ] },
+  B2: { id: 'B2', npc: 'Victor Blackwood', texto: 'Esse testamento é invenção sua! Meu tio me deixaria tudo — como sempre prometeu!', escolhas: [] },
+  B3: { id: 'B3', npc: 'Victor Blackwood', texto: 'No escritório. Trabalhando. Como sempre.', escolhas: [] },
+  C0: { id: 'C0', npc: 'Fynn (Guarda)', texto: 'Eu… eu não devia falar. Mas vi algo naquela noite que não me sai da cabeça.',
     escolhas: [
-      { texto: 'Pode confiar em mim. O que viu?',      proximoId: 'C1', pistaBloqueada: null, xp: 20 },
-      { texto: 'Não precisa ter medo. Sou detetive.',  proximoId: 'C1', pistaBloqueada: null, xp: 15 },
-    ],
-  },
-  C1: {
-    id: 'C1', npc: 'Fynn (Guarda)',
-    texto: 'Vi o Victor saindo da estufa tarde da noite. Carregava algo embrulhado. Não sei o quê — mas ele estava com pressa.',
-    escolhas: [],
-  },
+      { texto: 'Pode confiar em mim. O que viu?',     proximoId: 'C1', pistaBloqueada: null, xp: 20 },
+      { texto: 'Não precisa ter medo. Sou detetive.', proximoId: 'C1', pistaBloqueada: null, xp: 15 },
+    ] },
+  C1: { id: 'C1', npc: 'Fynn (Guarda)', texto: 'Vi o Victor saindo da estufa tarde da noite. Carregava algo embrulhado. Não sei o quê — mas ele estava com pressa.', escolhas: [] },
 };
 
-// ─── Store ────────────────────────────────────────────────────────────────────
-
-const POS_INICIAL = { x: 0, y: 0 };
+const POS_INICIAL      = { x: 0, y: 0 };
 const CELULAS_INICIAIS = new Set(bfsReveal(POS_INICIAL).map(c => `${c.x},${c.y}`));
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -197,7 +149,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   dialogoAtivo: false,
   noDialogoAtual: null,
   npcAtual: null,
-  statusJogo: 'jogando',
+  statusJogo: 'titulo',
   notificacoes: [],
 
   mover: (dx, dy) => set(state => {
@@ -232,7 +184,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   avancarDialogo: (proximoId, xpGanho, pistaBloqueada) => set(state => {
     const updates: Partial<GameState> = { xp: state.xp + xpGanho };
-
     if (pistaBloqueada) {
       const pista = state.pistas.find(p => p.id === pistaBloqueada && !p.coletada);
       if (pista) {
@@ -245,7 +196,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
       }
     }
-
     if (proximoId) {
       updates.noDialogoAtual = proximoId;
     } else {
@@ -253,11 +203,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       updates.noDialogoAtual = null;
       updates.npcAtual = null;
     }
-
     return updates;
   }),
 
   removerNotificacao: (id) => set(state => ({
     notificacoes: state.notificacoes.filter(n => n.id !== id),
   })),
+
+  // navega entre telas via statusJogo
+  setStatusJogo: (status) => set({ statusJogo: status }),
 }));
