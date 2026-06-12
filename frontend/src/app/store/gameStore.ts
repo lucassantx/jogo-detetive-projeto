@@ -308,6 +308,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.xpTotal !== undefined) set({ xp: data.xpTotal });
+        if (get().mostrandoRota) get().carregarRota();
       })
       .catch(() => { /* mantém XP otimista */ });
   },
@@ -453,7 +454,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     fetch(`${API}/${partidaId}/rota`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.rota) {
+        if (Array.isArray(data?.rota)) {
           set({ rotaTSP: data.rota as RotaTSPItem[], mostrandoRota: true });
         }
       })
@@ -461,11 +462,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   toggleRota: () => {
-    const { mostrandoRota, rotaTSP } = get();
-    if (!mostrandoRota && rotaTSP.length === 0) {
-      get().carregarRota();
+    const { mostrandoRota } = get();
+    if (mostrandoRota) {
+      set({ mostrandoRota: false });
     } else {
-      set({ mostrandoRota: !mostrandoRota });
+      get().carregarRota(); // sempre re-fetcha para garantir rota atualizada
     }
   },
 }));
