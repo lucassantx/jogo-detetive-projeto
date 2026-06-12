@@ -245,6 +245,46 @@
   color: var(--color-background);
 }
 
+/* ─── Grid wrapper — necessário para posicionar o SVG sobre o grid ─────────── */
+
+.grid-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0; /* evita espaço extra de inline-block */
+}
+
+/* SVG de linha pontilhada — sobreposto ao grid, acima da névoa */
+.rota-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Mensagem quando todas as pistas foram coletadas */
+.rota-msg {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-primary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-primary-dark);
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
+  align-self: center;
+}
+
+/* Botão desabilitado (sem backend conectado) */
+.btn-rota:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-rota:disabled:hover {
+  background: transparent;
+  color: var(--color-primary);
+}
+
 /* ─── Rota TSP — célula waypoint (Issue #8) ────────────────────────────────── */
 
 .cell--tsp {
