@@ -1,49 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import { useGameStore, Notificacao } from '../../store/gameStore';
+import { useGameStore } from '../../store/gameStore';
 import { useMovimento } from './useMovimento';
 import './Map.css';
-
-// ─── Notification card (Issue #5) ────────────────────────────────────────────
-
-const NotificacaoCard: React.FC<{
-  notif: Notificacao;
-  onDismiss: (id: string) => void;
-}> = ({ notif, onDismiss }) => {
-  const cor = notif.peso >= 9 ? 'high' : notif.peso >= 7 ? 'medium' : 'low';
-
-  useEffect(() => {
-    const timer = setTimeout(() => onDismiss(notif.id), 3200);
-    return () => clearTimeout(timer);
-  }, [notif.id, onDismiss]);
-
-  return (
-    <div className={`notificacao notificacao--${cor}`} role="alert">
-      <span className="notificacao-icone" aria-hidden="true">✦</span>
-      <div className="notificacao-info">
-        <span className="notificacao-nome">{notif.nome}</span>
-        <span className="notificacao-peso">Peso: {notif.peso}</span>
-      </div>
-    </div>
-  );
-};
-
-// ─── MapScreen ────────────────────────────────────────────────────────────────
 
 const MapScreen: React.FC = () => {
   useMovimento();
 
-  const posicao         = useGameStore(s => s.posicao);
+  const posicao          = useGameStore(s => s.posicao);
   const celulasReveladas = useGameStore(s => s.celulasReveladas);
-  const pistas          = useGameStore(s => s.pistas);
-  const npcs            = useGameStore(s => s.npcs);
-  const notificacoes    = useGameStore(s => s.notificacoes);
-  const dialogoAtivo    = useGameStore(s => s.dialogoAtivo);
-  const xp              = useGameStore(s => s.xp);
-  const coletarPista    = useGameStore(s => s.coletarPista);
-  const iniciarDialogo  = useGameStore(s => s.iniciarDialogo);
-  const removerNotif    = useGameStore(s => s.removerNotificacao);
+  const pistas           = useGameStore(s => s.pistas);
+  const npcs             = useGameStore(s => s.npcs);
+  const dialogoAtivo     = useGameStore(s => s.dialogoAtivo);
+  const coletarPista     = useGameStore(s => s.coletarPista);
+  const iniciarDialogo   = useGameStore(s => s.iniciarDialogo);
+  const rotaTSP          = useGameStore(s => s.rotaTSP);
+  const mostrandoRota    = useGameStore(s => s.mostrandoRota);
+  const toggleRota       = useGameStore(s => s.toggleRota);
 
-  // Detecta pista/NPC ao entrar em nova célula
+  // Auto-coleta pista e inicia diálogo ao entrar em nova célula
   const prevPos = useRef({ x: -1, y: -1 });
   useEffect(() => {
     if (prevPos.current.x === posicao.x && prevPos.current.y === posicao.y) return;
@@ -60,9 +34,15 @@ const MapScreen: React.FC = () => {
 
   return (
     <div className="map-screen">
-      {/* HUD mínimo de XP — Dev 4 substituirá por componente completo */}
-      <div className="map-xp-badge" aria-label={`XP: ${xp}`}>
-        ✦ {xp} XP
+      {/* Controle da rota TSP — Issue #8 */}
+      <div className="map-controls">
+        <button
+          className={`btn-rota ${mostrandoRota ? 'btn-rota--ativo' : ''}`}
+          onClick={toggleRota}
+          title="Mostrar rota ótima de investigação calculada pelo TSP"
+        >
+          {mostrandoRota ? '✕ Ocultar Rota' : '▶ Ver Rota'}
+        </button>
       </div>
 
       <div
@@ -80,6 +60,10 @@ const MapScreen: React.FC = () => {
           const npc   = npcs.find(n => n.celula.x === x && n.celula.y === y);
           const hasClue = isRevealed && !!pista;
           const hasNpc  = isRevealed && !!npc;
+          const tspIndex = mostrandoRota
+            ? rotaTSP.findIndex(r => r.x === x && r.y === y)
+            : -1;
+          const hasTsp = tspIndex >= 0;
 
           return (
             <div
@@ -90,6 +74,7 @@ const MapScreen: React.FC = () => {
                 hasClue     ? 'cell--clue'       : '',
                 hasNpc      ? 'cell--npc'        : '',
                 isDetective ? 'cell--detective'  : '',
+                hasTsp      ? 'cell--tsp'        : '',
               ].filter(Boolean).join(' ')}
               aria-label={
                 isDetective ? 'Detetive' :
@@ -104,20 +89,15 @@ const MapScreen: React.FC = () => {
               {!isDetective && hasNpc && (
                 <span className="cell-icon npc-icon" aria-hidden="true">◈</span>
               )}
+              {hasTsp && (
+                <span className="cell-tsp-badge" aria-hidden="true">{tspIndex + 1}</span>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Teclas de ajuda */}
       <p className="map-hint">WASD ou ↑↓←→ para mover</p>
-
-      {/* Cards de notificação de pista coletada */}
-      <div className="notificacoes-container" aria-live="polite">
-        {notificacoes.map(n => (
-          <NotificacaoCard key={n.id} notif={n} onDismiss={removerNotif} />
-        ))}
-      </div>
     </div>
   );
 };

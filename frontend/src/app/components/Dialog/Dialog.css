@@ -106,6 +106,19 @@
   margin-right: var(--spacing-xs);
 }
 
+/* Estado de carregamento (aguardando resposta da API) */
+.dialogue-carregando {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  animation: blink-cursor 1.2s step-end infinite;
+}
+
 /* Botão "Encerrar conversa" */
 .dialogue-choice-btn--end {
   border-color: var(--color-text-muted);
