@@ -16,7 +16,7 @@ const MapScreen: React.FC = () => {
   const rotaTSP          = useGameStore(s => s.rotaTSP);
   const mostrandoRota    = useGameStore(s => s.mostrandoRota);
   const toggleRota       = useGameStore(s => s.toggleRota);
-  const interacoesNPC    = useGameStore(s => s.interacoesNPC);
+  const escolhasRaizUsadas = useGameStore(s => s.escolhasRaizUsadas);
 
   // Auto-coleta pista e inicia diálogo ao entrar em nova célula
   const prevPos = useRef({ x: -1, y: -1 });
@@ -59,7 +59,7 @@ const MapScreen: React.FC = () => {
           const isDetective = posicao.x === x && posicao.y === y;
           const pista = pistas.find(p => p.celula.x === x && p.celula.y === y && !p.coletada);
           const npc        = npcs.find(n => n.celula.x === x && n.celula.y === y);
-          const npcEsgotado = !!npc && (interacoesNPC[npc.id] ?? 0) >= (MAX_INTERACOES_NPC[npc.id] ?? Infinity);
+          const npcEsgotado = !!npc && (escolhasRaizUsadas[npc.id]?.length ?? 0) >= (MAX_INTERACOES_NPC[npc.id] ?? Infinity);
           const hasClue = isRevealed && !!pista;
           const hasNpc  = isRevealed && !!npc;
           const tspIndex = mostrandoRota

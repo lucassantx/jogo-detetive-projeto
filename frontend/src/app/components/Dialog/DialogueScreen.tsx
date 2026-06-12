@@ -102,10 +102,11 @@ const DialogueScreen: React.FC = () => {
                   no.escolhas.map((escolha, i) => (
                     <button
                       key={i}
-                      className="dialogue-choice-btn"
-                      onClick={() => handleEscolha(no.id, i)}
+                      className={`dialogue-choice-btn${escolha.usado ? ' dialogue-choice-btn--usado' : ''}`}
+                      disabled={escolha.usado}
+                      onClick={() => !escolha.usado && handleEscolha(no.id, i)}
                     >
-                      <span className="choice-xp">+{escolha.xp} XP</span>
+                      <span className="choice-xp">{escolha.usado ? '✓' : `+${escolha.xp} XP`}</span>
                       {escolha.texto}
                     </button>
                   ))

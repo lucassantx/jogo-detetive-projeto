@@ -106,6 +106,22 @@
   margin-right: var(--spacing-xs);
 }
 
+/* Escolha já explorada — visível mas inacessível */
+.dialogue-choice-btn--usado {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.dialogue-choice-btn--usado:hover,
+.dialogue-choice-btn--usado:focus-visible {
+  background: transparent;
+  border-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+}
+
 /* Estado de carregamento (aguardando resposta da API) */
 .dialogue-carregando {
   flex: 1;
