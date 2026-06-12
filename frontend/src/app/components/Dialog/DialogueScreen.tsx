@@ -7,7 +7,7 @@ const TYPEWRITER_MS = 30;
 const DialogueScreen: React.FC = () => {
   const dialogoAtivo   = useGameStore(s => s.dialogoAtivo);
   const noDialogoAtual = useGameStore(s => s.noDialogoAtual);
-  const dialogos       = useGameStore(s => s.dialogos);
+  const noAtualData    = useGameStore(s => s.noAtualData);
   const avancarDialogo = useGameStore(s => s.avancarDialogo);
   const fecharDialogo  = useGameStore(s => s.fecharDialogo);
 
@@ -16,12 +16,19 @@ const DialogueScreen: React.FC = () => {
   const [visivel,       setVisivel]       = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const no = noDialogoAtual ? dialogos[noDialogoAtual] : null;
+  const no = noAtualData;
 
-  // Exibe/esconde o painel
+  // Exibe painel ao abrir diálogo ou ao trocar de nó
   useEffect(() => {
     if (dialogoAtivo) setVisivel(true);
-  }, [dialogoAtivo]);
+  }, [dialogoAtivo, noDialogoAtual]);
+
+  // Auto-fecha se backend não retornar nó em 5 s
+  useEffect(() => {
+    if (!dialogoAtivo || noAtualData) return;
+    const t = setTimeout(() => fecharDialogo(), 5000);
+    return () => clearTimeout(t);
+  }, [dialogoAtivo, noAtualData, fecharDialogo]);
 
   // Typewriter: reinicia a cada nó novo
   useEffect(() => {
@@ -46,7 +53,6 @@ const DialogueScreen: React.FC = () => {
     };
   }, [noDialogoAtual]);
 
-  // Clique no texto avança o typewriter
   const skipTypewriter = useCallback(() => {
     if (!no || textoCompleto) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -54,12 +60,10 @@ const DialogueScreen: React.FC = () => {
     setTextoCompleto(true);
   }, [no, textoCompleto]);
 
-  const handleEscolha = (proximoId: string | null, xpGanho: number, pistaBloqueada: string | null) => {
+  // index = posição da escolha na lista → backend usa para identificar o ramo
+  const handleEscolha = (noAtualId: string, index: number) => {
     setVisivel(false);
-    setTimeout(() => {
-      avancarDialogo(proximoId, xpGanho, pistaBloqueada);
-      if (proximoId) setVisivel(true);
-    }, 260);
+    setTimeout(() => avancarDialogo(noAtualId, index), 260);
   };
 
   const handleEncerrar = () => {
@@ -77,7 +81,7 @@ const DialogueScreen: React.FC = () => {
       aria-label={no ? `Diálogo com ${no.npc}` : 'Diálogo'}
     >
       <div className="dialogue-screen">
-        {no && (
+        {no ? (
           <>
             <div className="dialogue-npc-nome">{no.npc}</div>
 
@@ -99,9 +103,7 @@ const DialogueScreen: React.FC = () => {
                     <button
                       key={i}
                       className="dialogue-choice-btn"
-                      onClick={() =>
-                        handleEscolha(escolha.proximoId, escolha.xp, escolha.pistaBloqueada)
-                      }
+                      onClick={() => handleEscolha(no.id, i)}
                     >
                       <span className="choice-xp">+{escolha.xp} XP</span>
                       {escolha.texto}
@@ -118,6 +120,10 @@ const DialogueScreen: React.FC = () => {
               </div>
             )}
           </>
+        ) : (
+          <div className="dialogue-carregando" aria-live="polite">
+            Carregando…
+          </div>
         )}
       </div>
     </div>
