@@ -274,16 +274,6 @@
   align-self: center;
 }
 
-/* Botão desabilitado (sem backend conectado) */
-.btn-rota:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-rota:disabled:hover {
-  background: transparent;
-  color: var(--color-primary);
-}
 
 /* ─── Rota TSP — célula waypoint (Issue #8) ────────────────────────────────── */
 
