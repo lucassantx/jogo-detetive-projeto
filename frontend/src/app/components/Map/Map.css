@@ -83,6 +83,17 @@
   background-color: #1d1530;
 }
 
+/* NPC sem mais interações disponíveis */
+.cell--npc-esgotado {
+  background-color: #131313;
+}
+
+.npc-icon--esgotado {
+  color: #3a3a3a !important;
+  animation: none !important;
+  opacity: 0.5;
+}
+
 /* ─── Detective ────────────────────────────────────────────────────────────── */
 
 .cell--detective {

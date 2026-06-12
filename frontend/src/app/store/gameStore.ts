@@ -48,6 +48,13 @@ export interface RotaTSPItem {
 
 export type StatusJogo = 'titulo' | 'jogando' | 'acusando' | 'fim';
 
+// Número de caminhos raiz→folha em cada árvore de diálogo (backend/src/seed/dialogos.js)
+export const MAX_INTERACOES_NPC: Record<string, number> = {
+  adelaide: 7, // A0→A1→{A1a,A1b,fim} + A0→A2 + A0→A3→{A3a,A3b,A3c}
+  victor:   6, // B0→B1→{B1a,B1b,fim} + B0→B2→{B2a,fim} + B0→B3
+  fynn:     3, // C0→{C1,C2,C3}
+};
+
 interface GameState {
   partidaId: string | null;
   posicao: { x: number; y: number };
@@ -64,6 +71,7 @@ interface GameState {
   notificacoes: Notificacao[];
   rotaTSP: RotaTSPItem[];
   mostrandoRota: boolean;
+  interacoesNPC: Record<string, number>;
 
   mover: (dx: number, dy: number) => void;
   coletarPista: (pistaId: string) => void;
@@ -142,6 +150,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   notificacoes:     [],
   rotaTSP:          [],
   mostrandoRota:    false,
+  interacoesNPC:    {},
 
   // Cria a partida no backend ao iniciar o jogo
   setStatusJogo: (status) => {
@@ -225,9 +234,13 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // Inicia diálogo — carrega nó raiz via API
   iniciarDialogo: (npcId) => {
-    const { partidaId, npcs } = get();
+    const { partidaId, npcs, interacoesNPC } = get();
     const npc = npcs.find(n => n.id === npcId);
     if (!npc) return;
+
+    const usadas  = interacoesNPC[npcId] ?? 0;
+    const maximas = MAX_INTERACOES_NPC[npcId] ?? Infinity;
+    if (usadas >= maximas) return;
 
     set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: npc.dialogoInicial, noAtualData: null });
 
@@ -251,7 +264,20 @@ export const useGameStore = create<GameState>((set, get) => ({
       .catch(() => set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null }));
   },
 
-  fecharDialogo: () => set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null }),
+  fecharDialogo: () => {
+    const { npcAtual, noAtualData } = get();
+    set(s => ({
+      dialogoAtivo:  false,
+      noDialogoAtual: null,
+      npcAtual:      null,
+      noAtualData:   null,
+      // conta apenas se houve conteúdo real (nó carregado) — cobre o caso
+      // de nós terminais com escolhas: [] que fecham via botão "Encerrar"
+      interacoesNPC: (npcAtual && noAtualData)
+        ? { ...s.interacoesNPC, [npcAtual]: (s.interacoesNPC[npcAtual] ?? 0) + 1 }
+        : s.interacoesNPC,
+    }));
+  },
 
   // Avança na árvore de diálogos via API (Issue #6 — Árvore de Decisão)
   avancarDialogo: (noAtualId, index) => {
@@ -278,7 +304,17 @@ export const useGameStore = create<GameState>((set, get) => ({
           const no = proximoNo as NoDialogo;
           set({ noDialogoAtual: no.id, noAtualData: no });
         } else {
-          set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null });
+          // fim natural da conversa — registra a interação
+          const { npcAtual } = get();
+          set(s => ({
+            dialogoAtivo:   false,
+            noDialogoAtual: null,
+            npcAtual:       null,
+            noAtualData:    null,
+            interacoesNPC:  npcAtual
+              ? { ...s.interacoesNPC, [npcAtual]: (s.interacoesNPC[npcAtual] ?? 0) + 1 }
+              : s.interacoesNPC,
+          }));
         }
       })
       .catch(() => set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null }));
