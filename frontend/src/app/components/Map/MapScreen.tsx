@@ -54,8 +54,7 @@ const MapScreen: React.FC = () => {
         <button
           className={`btn-rota ${mostrandoRota ? 'btn-rota--ativo' : ''}`}
           onClick={toggleRota}
-          disabled={!partidaId}
-          title={!partidaId ? 'Requer conexão com o servidor' : 'Calcular rota ótima de investigação (TSP)'}
+          title={partidaId ? 'Calcular rota ótima de investigação (TSP)' : 'Rota local — vizinho mais próximo (offline)'}
         >
           {mostrandoRota ? '✕ Ocultar Rota' : '▶ Sugerir rota'}
         </button>

@@ -448,8 +448,27 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // Carrega rota TSP das pistas pendentes (Issue #8)
   carregarRota: () => {
-    const { partidaId } = get();
-    if (!partidaId) return;
+    const { partidaId, pistas, posicao } = get();
+
+    if (!partidaId) {
+      // Fallback offline: vizinho mais próximo a partir da posição atual
+      const pendentes = pistas.filter(p => !p.coletada);
+      const rota: RotaTSPItem[] = [];
+      const restantes = pendentes.map(p => ({ id: p.id, x: p.celula.x, y: p.celula.y }));
+      let atual = posicao;
+      while (restantes.length > 0) {
+        let idx = 0, minD = Infinity;
+        restantes.forEach((r, i) => {
+          const d = Math.abs(r.x - atual.x) + Math.abs(r.y - atual.y);
+          if (d < minD) { minD = d; idx = i; }
+        });
+        const proximo = restantes.splice(idx, 1)[0];
+        rota.push(proximo);
+        atual = proximo;
+      }
+      set({ rotaTSP: rota, mostrandoRota: true });
+      return;
+    }
 
     fetch(`${API}/${partidaId}/rota`)
       .then(r => r.ok ? r.json() : null)
