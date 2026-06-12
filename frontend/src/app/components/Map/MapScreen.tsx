@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useGameStore } from '../../store/gameStore';
+import { useGameStore, MAX_INTERACOES_NPC } from '../../store/gameStore';
 import { useMovimento } from './useMovimento';
 import './Map.css';
 
@@ -16,6 +16,7 @@ const MapScreen: React.FC = () => {
   const rotaTSP          = useGameStore(s => s.rotaTSP);
   const mostrandoRota    = useGameStore(s => s.mostrandoRota);
   const toggleRota       = useGameStore(s => s.toggleRota);
+  const interacoesNPC    = useGameStore(s => s.interacoesNPC);
 
   // Auto-coleta pista e inicia diálogo ao entrar em nova célula
   const prevPos = useRef({ x: -1, y: -1 });
@@ -57,7 +58,8 @@ const MapScreen: React.FC = () => {
           const isRevealed  = celulasReveladas.has(key);
           const isDetective = posicao.x === x && posicao.y === y;
           const pista = pistas.find(p => p.celula.x === x && p.celula.y === y && !p.coletada);
-          const npc   = npcs.find(n => n.celula.x === x && n.celula.y === y);
+          const npc        = npcs.find(n => n.celula.x === x && n.celula.y === y);
+          const npcEsgotado = !!npc && (interacoesNPC[npc.id] ?? 0) >= (MAX_INTERACOES_NPC[npc.id] ?? Infinity);
           const hasClue = isRevealed && !!pista;
           const hasNpc  = isRevealed && !!npc;
           const tspIndex = mostrandoRota
@@ -71,10 +73,11 @@ const MapScreen: React.FC = () => {
               className={[
                 'cell',
                 isRevealed  ? 'cell--revealed'  : 'cell--fog',
-                hasClue     ? 'cell--clue'       : '',
-                hasNpc      ? 'cell--npc'        : '',
-                isDetective ? 'cell--detective'  : '',
-                hasTsp      ? 'cell--tsp'        : '',
+                hasClue      ? 'cell--clue'          : '',
+                hasNpc       ? 'cell--npc'           : '',
+                npcEsgotado  ? 'cell--npc-esgotado'  : '',
+                isDetective  ? 'cell--detective'     : '',
+                hasTsp       ? 'cell--tsp'           : '',
               ].filter(Boolean).join(' ')}
               aria-label={
                 isDetective ? 'Detetive' :
@@ -87,7 +90,12 @@ const MapScreen: React.FC = () => {
                 <span className="cell-icon detective-icon" aria-hidden="true">◉</span>
               )}
               {!isDetective && hasNpc && (
-                <span className="cell-icon npc-icon" aria-hidden="true">◈</span>
+                <span
+                  className={`cell-icon npc-icon ${npcEsgotado ? 'npc-icon--esgotado' : ''}`}
+                  aria-hidden="true"
+                >
+                  {npcEsgotado ? '◇' : '◈'}
+                </span>
               )}
               {hasTsp && (
                 <span className="cell-tsp-badge" aria-hidden="true">{tspIndex + 1}</span>
