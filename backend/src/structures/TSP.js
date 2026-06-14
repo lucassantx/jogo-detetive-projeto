@@ -48,7 +48,7 @@ function validarRota(rota, pontosOriginais) {
 }
 
 // =============================================================
-// HELD-KARP (para n ≤ 10)
+// HELD-KARP (para n ≤ 15)
 // =============================================================
 
 function heldKarp(pontos) {
@@ -287,8 +287,8 @@ function calcularRotaTSP(locais, options = {}) {
 
   const { forceHeuristic = false } = options;
 
-  // Usar Held-Karp para n ≤ 10 (exato)
-  if (!forceHeuristic && locais.length <= 10) {
+  // Usar Held-Karp para n ≤ 15 (exato)
+  if (!forceHeuristic && locais.length <= 15) {
     return heldKarp(locais);
   }
 
@@ -315,7 +315,7 @@ function calcularRotaTSPComDetalhes(locais) {
   const rota = calcularRotaTSP(locais);
   const tempo = Date.now() - inicio;
 
-  const algoritmo = (locais.length <= 10 && locais.length > 0)
+  const algoritmo = (locais.length <= 15 && locais.length > 0)
     ? "Held-Karp (exato)"
     : "Vizinho Mais Próximo + 2-opt (heurístico)";
 
