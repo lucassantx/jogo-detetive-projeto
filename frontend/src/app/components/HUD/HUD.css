@@ -169,6 +169,33 @@
   line-height: 1.4;
 }
 
+/* ── botão acusar ───────────────────────────────────────────────────────── */
+
+.hud-acusar {
+  padding: 0.75rem;
+  border-top: 1px solid #3a2c1a;
+}
+
+.btn-acusar {
+  width: 100%;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px solid #8a2020;
+  border-radius: 4px;
+  color: #c04040;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-acusar:hover {
+  background: #8a2020;
+  color: #fff;
+}
+
 /* ── notificações ───────────────────────────────────────────────────────── */
 
 .notificacoes-container {

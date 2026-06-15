@@ -22,8 +22,6 @@ const SUSPEITOS: Suspeito[] = [
   { id: 'harlow',   nome: 'Dr. Harlow',       icone: '🩺', motivo: 'Médico que prescreveu o remédio' },
 ];
 
-const PARTIDA_ID_MOCK = 'mock-partida-001';
-
 type Etapa = 'lista' | 'confirmacao' | 'resultado';
 
 const corPista = (peso: number) => {
@@ -34,6 +32,7 @@ const corPista = (peso: number) => {
 
 const Accusation = () => {
   const pistasColetadas = useGameStore(s => s.pistasColetadas);
+  const partidaId       = useGameStore(s => s.partidaId);
 
   const [etapa, setEtapa]                  = useState<Etapa>('lista');
   const [suspeitoSelecionado, setSuspeito] = useState<Suspeito | null>(null);
@@ -49,33 +48,37 @@ const Accusation = () => {
     if (!suspeitoSelecionado) return;
     setCarregando(true);
 
-    try {
-      const res = await fetch(`/api/partida/${PARTIDA_ID_MOCK}/acusar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suspeitoId: suspeitoSelecionado.id }),
-      });
-      if (!res.ok) throw new Error();
-      const data: ResultadoAcusacao = await res.json();
-      setResultado(data);
-    } catch {
-      // mock local para Sprint 1 sem banco
-      const top3 = [...pistasColetadas]
-        .sort((a, b) => b.peso - a.peso)
-        .slice(0, 3);
-
-      setResultado({
-        acertou: suspeitoSelecionado.id === 'victor',
-        suspeitoAcusado: suspeitoSelecionado.nome,
-        top3,
-        argumento: suspeitoSelecionado.id === 'victor'
-          ? 'As evidências apontam para Victor Blackwood como o assassino de Sir Edmund.'
-          : `${suspeitoSelecionado.nome} não é o assassino. As pistas indicam outra direção.`,
-      });
-    } finally {
-      setCarregando(false);
-      setEtapa('resultado');
+    if (partidaId) {
+      try {
+        const res = await fetch(`/api/partida/${partidaId}/acusar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suspeitoId: suspeitoSelecionado.id }),
+        });
+        if (!res.ok) throw new Error();
+        const data: ResultadoAcusacao = await res.json();
+        setResultado(data);
+        setCarregando(false);
+        setEtapa('resultado');
+        return;
+      } catch { /* fallback local abaixo */ }
     }
+
+    // fallback offline
+    const top3 = [...pistasColetadas]
+      .sort((a, b) => b.peso - a.peso)
+      .slice(0, 3);
+
+    setResultado({
+      acertou: suspeitoSelecionado.id === 'victor',
+      suspeitoAcusado: suspeitoSelecionado.nome,
+      top3,
+      argumento: suspeitoSelecionado.id === 'victor'
+        ? 'As evidências apontam para Victor Blackwood como o assassino de Sir Edmund.'
+        : `${suspeitoSelecionado.nome} não é o assassino. As pistas indicam outra direção.`,
+    });
+    setCarregando(false);
+    setEtapa('resultado');
   };
 
   // ── lista de suspeitos ───────────────────────────────────────────────────

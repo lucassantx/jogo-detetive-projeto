@@ -32,8 +32,9 @@ const NotificacaoCard = ({ notif }: { notif: Notificacao }) => {
 };
 
 const HUD = () => {
-  const xp           = useGameStore(s => s.xp);
-  const notificacoes = useGameStore(s => s.notificacoes);
+  const xp            = useGameStore(s => s.xp);
+  const notificacoes  = useGameStore(s => s.notificacoes);
+  const setStatusJogo = useGameStore(s => s.setStatusJogo);
 
   const level      = Math.floor(xp / XP_POR_LEVEL) + 1;
   const xpNoLevel  = xp % XP_POR_LEVEL;
@@ -72,6 +73,13 @@ const HUD = () => {
 
       {/* ── inventário ──────────────────────────────────────────────────── */}
       <Inventario />
+
+      {/* ── botão acusar ────────────────────────────────────────────────── */}
+      <div className="hud-acusar">
+        <button className="btn-acusar" onClick={() => setStatusJogo('acusando')}>
+          ⚖ Acusar Suspeito
+        </button>
+      </div>
 
       {/* ── notificações deslizantes ────────────────────────────────────── */}
       <div className="notificacoes-container">
