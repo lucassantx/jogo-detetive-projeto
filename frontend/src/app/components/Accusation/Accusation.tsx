@@ -5,7 +5,6 @@ import './Accusation.css';
 interface Suspeito {
   id: string;
   nome: string;
-  icone: string;
   motivo: string;
 }
 
@@ -17,12 +16,10 @@ interface ResultadoAcusacao {
 }
 
 const SUSPEITOS: Suspeito[] = [
-  { id: 'victor',   nome: 'Victor Blackwood', icone: '🎩', motivo: 'Herdeiro do testamento alterado' },
-  { id: 'adelaide', nome: 'Adelaide Cross',   icone: '🍵', motivo: 'Governanta com acesso à cozinha' },
-  { id: 'harlow',   nome: 'Dr. Harlow',       icone: '🩺', motivo: 'Médico que prescreveu o remédio' },
+  { id: 'victor',   nome: 'Victor Blackwood', motivo: 'Herdeiro do testamento alterado' },
+  { id: 'adelaide', nome: 'Adelaide Cross',   motivo: 'Governanta com acesso à cozinha' },
+  { id: 'harlow',   nome: 'Dr. Harlow',       motivo: 'Médico que prescreveu o remédio' },
 ];
-
-const PARTIDA_ID_MOCK = 'mock-partida-001';
 
 type Etapa = 'lista' | 'confirmacao' | 'resultado';
 
@@ -34,6 +31,7 @@ const corPista = (peso: number) => {
 
 const Accusation = () => {
   const pistasColetadas = useGameStore(s => s.pistasColetadas);
+  const partidaId       = useGameStore(s => s.partidaId);
 
   const [etapa, setEtapa]                  = useState<Etapa>('lista');
   const [suspeitoSelecionado, setSuspeito] = useState<Suspeito | null>(null);
@@ -49,33 +47,59 @@ const Accusation = () => {
     if (!suspeitoSelecionado) return;
     setCarregando(true);
 
-    try {
-      const res = await fetch(`/api/partida/${PARTIDA_ID_MOCK}/acusar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suspeitoId: suspeitoSelecionado.id }),
-      });
-      if (!res.ok) throw new Error();
-      const data: ResultadoAcusacao = await res.json();
-      setResultado(data);
-    } catch {
-      // mock local para Sprint 1 sem banco
-      const top3 = [...pistasColetadas]
-        .sort((a, b) => b.peso - a.peso)
-        .slice(0, 3);
-
-      setResultado({
-        acertou: suspeitoSelecionado.id === 'victor',
-        suspeitoAcusado: suspeitoSelecionado.nome,
-        top3,
-        argumento: suspeitoSelecionado.id === 'victor'
-          ? 'As evidências apontam para Victor Blackwood como o assassino de Sir Edmund.'
-          : `${suspeitoSelecionado.nome} não é o assassino. As pistas indicam outra direção.`,
-      });
-    } finally {
-      setCarregando(false);
-      setEtapa('resultado');
+    if (partidaId) {
+      try {
+        const res = await fetch(`/api/partida/${partidaId}/acusar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suspeitoId: suspeitoSelecionado.id }),
+        });
+        if (!res.ok) throw new Error();
+        const data: ResultadoAcusacao = await res.json();
+        setResultado(data);
+        setCarregando(false);
+        setEtapa('resultado');
+        return;
+      } catch { /* fallback local abaixo */ }
     }
+
+    // fallback offline
+    const top3 = [...pistasColetadas]
+      .sort((a, b) => b.peso - a.peso)
+      .slice(0, 3);
+
+    const argumentos: Record<string, string> = {
+      victor: [
+        'Victor Blackwood pediu a chave extra do cofre a Fynn O\'Brien na tarde anterior ao crime, alegando buscar cartas pessoais.',
+        'Foi visto por Fynn circulando pelo corredor leste às 22h45 — caminho direto para a cozinha e a biblioteca.',
+        'Adelaide testemunhou sua presença na cozinha enquanto preparava o chá das 23h, permanecendo sozinho perto da bandeja por ao menos um minuto.',
+        'Conhecia a localização e o efeito do arsênico cultivado na estufa; sabia da combinação do cofre desde a juventude.',
+        'A rasura no testamento, em sua própria caligrafia, revela o motivo: o herdeiro temia perder a herança.',
+        'A cadeia de evidências é completa. Acusação correta. CULPADO.',
+      ].join(' '),
+      adelaide: [
+        'Adelaide Cross tinha motivo — 20 anos de lealdade ignorados no testamento — e acesso total à cozinha.',
+        'Ela mesma entregou o chá. Ela mesma escreveu a carta anônima de ameaça.',
+        'Porém, não há evidência de que tenha acessado o cofre onde o arsênico estava guardado.',
+        'Foi o Victor quem pediu a chave do cofre, foi o Victor quem esteve sozinho perto do chá, foi o Victor quem conhecia o Arsenicum album da estufa.',
+        'Adelaide agiu por raiva, não por assassinato. Acusação incorreta. INOCENTE — o assassino é Victor Blackwood.',
+      ].join(' '),
+      harlow: [
+        'O Dr. Harlow encobriu a morte ao assinar o atestado como parada cardíaca, sabendo que Edmund estava em estágio terminal de câncer pancreático.',
+        'Seu erro foi de omissão e cumplicidade — não de homicídio.',
+        'Não havia acesso ao cofre, não foi visto na cozinha, não teve contato com o arsênico.',
+        'Acusação incorreta. INOCENTE — o assassino é Victor Blackwood.',
+      ].join(' '),
+    };
+
+    setResultado({
+      acertou: suspeitoSelecionado.id === 'victor',
+      suspeitoAcusado: suspeitoSelecionado.nome,
+      top3,
+      argumento: argumentos[suspeitoSelecionado.id] ?? `${suspeitoSelecionado.nome} não é o assassino.`,
+    });
+    setCarregando(false);
+    setEtapa('resultado');
   };
 
   // ── lista de suspeitos ───────────────────────────────────────────────────
@@ -87,7 +111,6 @@ const Accusation = () => {
         <div className="accusation-suspeitos">
           {SUSPEITOS.map(s => (
             <button key={s.id} className="suspeito-card" onClick={() => selecionarSuspeito(s)}>
-              <span className="suspeito-icone">{s.icone}</span>
               <span className="suspeito-nome">{s.nome}</span>
               <span className="suspeito-motivo">{s.motivo}</span>
             </button>
