@@ -1,19 +1,31 @@
-// TODO Dev 1 — Sprint 1 | Issue #3
-// BFS para calcular campo de visão do detetive no grid 10×10
-//
-// Input:  posicao { x, y }, raio (default 3), tamanhoGrid (default 10)
-// Output: Array de { x, y } das células dentro do raio de visão
-//
-// Restrições:
-//   - Não incluir células com x < 0, y < 0, x >= tamanhoGrid, y >= tamanhoGrid
-//   - Testar cantos: (0,0), (9,9), (0,9), (9,0)
-//
-// Complexidade: O(V+E) no grid
-//
-// Integração: usado por mapaController → endpoint GET /api/partida/:id/visao
-
+// retorna todas as células dentro do raio a partir da posição, usando BFS — O(V+E)
 function calcularVisao(posicao, raio = 3, tamanhoGrid = 10) {
-  // TODO
+  const { x: ox, y: oy } = posicao;
+  const visitados = new Set();
+  const fila = [{ x: ox, y: oy, dist: 0 }];
+  const visiveis = [];
+
+  const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+  while (fila.length > 0) {
+    const { x, y, dist } = fila.shift();
+    const key = `${x},${y}`;
+
+    if (visitados.has(key) || dist > raio) continue;
+    visitados.add(key);
+    visiveis.push({ x, y });
+
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx;
+      const ny = y + dy;
+      // descarta células fora do grid
+      if (nx >= 0 && nx < tamanhoGrid && ny >= 0 && ny < tamanhoGrid) {
+        fila.push({ x: nx, y: ny, dist: dist + 1 });
+      }
+    }
+  }
+
+  return visiveis;
 }
 
 module.exports = { calcularVisao };
