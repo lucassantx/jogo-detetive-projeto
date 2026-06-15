@@ -25,7 +25,8 @@ export interface Escolha {
   proximoId: string | null;
   pistaBloqueada: string | null;
   xp: number;
-  usado?: boolean; // marcado dinamicamente — não vem do backend
+  visitado?: boolean; // tomada pelo menos uma vez — visual ✓, ainda clicável se há ramos abaixo
+  usado?: boolean;    // subárvore inteiramente explorada — desabilitado
 }
 
 export interface NoDialogo {
@@ -371,6 +372,22 @@ function isNodeFullyExplored(
   return true;
 }
 
+// Aplica flags visitado/usado a todas as escolhas de um nó, em qualquer nível da árvore
+function prepareNodeChoices(
+  node: NoDialogo,
+  npcVisited: Record<string, number[]>,
+  dialogs: Record<string, NoDialogo>
+): NoDialogo {
+  return {
+    ...node,
+    escolhas: node.escolhas.map((e, i) => {
+      const taken    = (npcVisited[node.id] ?? []).includes(i);
+      const exhausted = taken && isNodeFullyExplored(e.proximoId, npcVisited, dialogs);
+      return { ...e, visitado: taken, usado: exhausted };
+    }),
+  };
+}
+
 // Retorna os índices de escolhas raiz cuja subárvore completa foi explorada
 function computeExhaustedRootChoices(
   rootNodeId: string,
@@ -496,16 +513,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const npc = npcs.find(n => n.id === npcId);
     if (!npc) return;
 
-    // Modo offline: usa npcVisitedChoices para determinar quais rotas raiz foram completamente exploradas
+    // Modo offline: aplica flags visitado/usado a todas as escolhas do nó raiz
     if (!partidaId) {
       const raw = DIALOGOS_LOCAL[npc.dialogoInicial] ?? null;
       if (!raw) return;
       const npcVisited = get().npcVisitedChoices[npcId] ?? {};
-      const exhausted  = computeExhaustedRootChoices(npc.dialogoInicial, npcVisited, DIALOGOS_LOCAL);
-      const noMarcado: NoDialogo = {
-        ...raw,
-        escolhas: raw.escolhas.map((e, i) => ({ ...e, usado: exhausted.includes(i) })),
-      };
+      const noMarcado  = prepareNodeChoices(raw, npcVisited, DIALOGOS_LOCAL);
       if (noMarcado.escolhas.every(e => e.usado)) return; // NPC completamente explorado
       set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: noMarcado.id, noAtualData: noMarcado });
       return;
@@ -583,7 +596,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (escolha.pistaBloqueada) get().coletarPista(escolha.pistaBloqueada);
 
       if (escolha.proximoId) {
-        const proximo = DIALOGOS_LOCAL[escolha.proximoId] ?? null;
+        const rawProximo = DIALOGOS_LOCAL[escolha.proximoId] ?? null;
+        // Aplica visitado/usado em todos os filhos do próximo nó
+        const proximo = rawProximo ? prepareNodeChoices(rawProximo, newNodeVisited, DIALOGOS_LOCAL) : null;
         set(s => ({ xp: s.xp + escolha.xp, noDialogoAtual: escolha.proximoId, noAtualData: proximo }));
       } else {
         set(s => ({

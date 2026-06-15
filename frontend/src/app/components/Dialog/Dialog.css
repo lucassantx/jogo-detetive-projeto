@@ -106,9 +106,28 @@
   margin-right: var(--spacing-xs);
 }
 
-/* Escolha já explorada — visível mas inacessível */
+/* Visitada mas com sub-ramos ainda disponíveis — clicável, com indicador */
+.dialogue-choice-btn--visitado {
+  border-color: var(--color-primary-dark);
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.dialogue-choice-btn--visitado .choice-xp {
+  color: var(--color-text-muted);
+}
+
+.dialogue-choice-btn--visitado:hover,
+.dialogue-choice-btn--visitado:focus-visible {
+  background: var(--color-surface-alt);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  opacity: 1;
+}
+
+/* Completamente explorada — visível mas inacessível */
 .dialogue-choice-btn--usado {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: not-allowed;
   border-color: var(--color-surface-alt);
   color: var(--color-text-muted);
