@@ -238,8 +238,8 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
   B3: { id: 'B3', npc: 'Victor Blackwood',
     texto: 'A estufa? Claro que conheço. Passei por lá ontem à tarde. Meu tio cultivava coisas interessantes. Era um hobby antigo dele.',
     escolhas: [
-      { texto: 'O que você notou na estufa?',          proximoId: 'B3a', pistaBloqueada: null,            xp: 15 },
-      { texto: 'Você colheu alguma coisa?',             proximoId: 'B3b', pistaBloqueada: null,            xp: 20 },
+      { texto: 'O que você notou na estufa?',          proximoId: 'B3a', pistaBloqueada: null,             xp: 15 },
+      { texto: 'Você colheu alguma coisa?',             proximoId: 'B3b', pistaBloqueada: null,             xp: 20 },
       { texto: 'Sabe identificar plantas medicinais?',  proximoId: 'B3c', pistaBloqueada: 'planta_arsenico', xp: 30 },
     ]},
   B3a: { id: 'B3a', npc: 'Victor Blackwood',
@@ -330,8 +330,6 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
 
 // ─── Dados estáticos do mapa (posições conforme backend/src/seed/) ────────────
 
-// Pistas espalhadas pelo grid (10×10) — sem sobreposição com NPCs
-// Nota: backend/src/controllers/dialogoController.js precisa de update correspondente.
 const PISTAS_MOCK: Pista[] = [
   { id: 'frasco_arsenico',   nome: 'Frasco de arsênico vazio',    descricao: 'Frasco de vidro com resíduos de arsênico.',   peso: 10, celula: { x: 2, y: 1 }, coletada: false },
   { id: 'carta_anonima',     nome: 'Carta anônima rasgada',       descricao: 'Pedaços de carta com letra disfarçada.',       peso: 8,  celula: { x: 4, y: 0 }, coletada: false },
@@ -345,7 +343,6 @@ const PISTAS_MOCK: Pista[] = [
   { id: 'bilhete_trem',      nome: 'Bilhete de trem cancelado',   descricao: 'Bilhete com data da noite do crime.',          peso: 6,  celula: { x: 9, y: 1 }, coletada: false },
 ];
 
-// NPCs distribuídos no grid, sem sobreposição com pistas
 const NPCS_MOCK: NPC[] = [
   { id: 'adelaide', nome: 'Adelaide Cross',   celula: { x: 3, y: 4 }, dialogoInicial: 'A0' },
   { id: 'victor',   nome: 'Victor Blackwood', celula: { x: 7, y: 6 }, dialogoInicial: 'B0' },
@@ -355,7 +352,6 @@ const NPCS_MOCK: NPC[] = [
 
 // ─── Helpers para rastreamento de subárvores de diálogo ──────────────────────
 
-// Retorna true quando todos os branches de nodeId foram percorridos
 function isNodeFullyExplored(
   nodeId: string | null,
   npcVisited: Record<string, number[]>,
@@ -372,7 +368,6 @@ function isNodeFullyExplored(
   return true;
 }
 
-// Aplica flags visitado/usado a todas as escolhas de um nó, em qualquer nível da árvore
 function prepareNodeChoices(
   node: NoDialogo,
   npcVisited: Record<string, number[]>,
@@ -381,14 +376,13 @@ function prepareNodeChoices(
   return {
     ...node,
     escolhas: node.escolhas.map((e, i) => {
-      const taken    = (npcVisited[node.id] ?? []).includes(i);
+      const taken     = (npcVisited[node.id] ?? []).includes(i);
       const exhausted = taken && isNodeFullyExplored(e.proximoId, npcVisited, dialogs);
       return { ...e, visitado: taken, usado: exhausted };
     }),
   };
 }
 
-// Retorna os índices de escolhas raiz cuja subárvore completa foi explorada
 function computeExhaustedRootChoices(
   rootNodeId: string,
   npcVisited: Record<string, number[]>,
@@ -408,25 +402,24 @@ const POS_INICIAL      = { x: 0, y: 0 };
 const CELULAS_INICIAIS = new Set(bfsReveal(POS_INICIAL).map(c => `${c.x},${c.y}`));
 
 export const useGameStore = create<GameState>((set, get) => ({
-  partidaId:        null,
-  posicao:          POS_INICIAL,
-  celulasReveladas: CELULAS_INICIAIS,
-  pistas:           PISTAS_MOCK,
-  npcs:             NPCS_MOCK,
-  pistasColetadas:  [],
-  xp:               0,
-  dialogoAtivo:     false,
-  noDialogoAtual:   null,
-  noAtualData:      null,
-  npcAtual:         null,
-  statusJogo:       'titulo',
-  notificacoes:     [],
+  partidaId:           null,
+  posicao:             POS_INICIAL,
+  celulasReveladas:    CELULAS_INICIAIS,
+  pistas:              PISTAS_MOCK,
+  npcs:                NPCS_MOCK,
+  pistasColetadas:     [],
+  xp:                  0,
+  dialogoAtivo:        false,
+  noDialogoAtual:      null,
+  noAtualData:         null,
+  npcAtual:            null,
+  statusJogo:          'titulo',
+  notificacoes:        [],
   rotaTSP:             [],
   mostrandoRota:       false,
   npcVisitedChoices:   {},
   escolhasRaizUsadas:  {},
 
-  // Cria a partida no backend ao iniciar o jogo
   setStatusJogo: (status) => {
     set({ statusJogo: status });
     if (status === 'jogando') {
@@ -442,7 +435,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  // Movimento com update otimista + sync via API
   mover: (dx, dy) => {
     const state = get();
     if (state.dialogoAtivo) return;
@@ -478,7 +470,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       .catch(() => { /* mantém posição otimista */ });
   },
 
-  // Coleta pista com update otimista + sync de XP via API
   coletarPista: (pistaId) => {
     const state = get();
     const pista = state.pistas.find(p => p.id === pistaId && !p.coletada);
@@ -507,24 +498,25 @@ export const useGameStore = create<GameState>((set, get) => ({
       .catch(() => { /* mantém XP otimista */ });
   },
 
-  // Inicia diálogo — carrega nó raiz, bloqueia rotas já usadas
   iniciarDialogo: (npcId) => {
     const { partidaId, npcs, escolhasRaizUsadas } = get();
     const npc = npcs.find(n => n.id === npcId);
     if (!npc) return;
 
-    // Modo offline: aplica flags visitado/usado a todas as escolhas do nó raiz
+    // Modo offline
     if (!partidaId) {
       const raw = DIALOGOS_LOCAL[npc.dialogoInicial] ?? null;
       if (!raw) return;
       const npcVisited = get().npcVisitedChoices[npcId] ?? {};
       const noMarcado  = prepareNodeChoices(raw, npcVisited, DIALOGOS_LOCAL);
-      if (noMarcado.escolhas.every(e => e.usado)) return; // NPC completamente explorado
+      if (noMarcado.escolhas.every(e => e.usado)) return;
       set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: noMarcado.id, noAtualData: noMarcado });
       return;
     }
 
-    // Modo online: prepara nó com base em escolhasRaizUsadas (sincronizadas com a API)
+    // Modo online — RESET antes do fetch evita mostrar nó do NPC anterior
+    set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: npc.dialogoInicial, noAtualData: null });
+
     const usadas = escolhasRaizUsadas[npcId] ?? [];
     const prepararNoOnline = (no: NoDialogo): NoDialogo | null => {
       const noMarcado: NoDialogo = {
@@ -533,8 +525,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
       return noMarcado.escolhas.every(e => e.usado) ? null : noMarcado;
     };
-
-    set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: npc.dialogoInicial, noAtualData: null });
 
     fetch(`${API}/${partidaId}/interagir`, {
       method: 'POST',
@@ -551,10 +541,24 @@ export const useGameStore = create<GameState>((set, get) => ({
           }
           set({ noAtualData: no, noDialogoAtual: no.id });
         } else {
-          set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null });
+          set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null });
         }
       })
-      .catch(() => set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null }));
+      .catch(() => {
+        // fallback local se backend falhar — evita trava em loading
+        const raw = DIALOGOS_LOCAL[npc.dialogoInicial] ?? null;
+        if (!raw) {
+          set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null });
+          return;
+        }
+        const npcVisited = get().npcVisitedChoices[npcId] ?? {};
+        const no = prepareNodeChoices(raw, npcVisited, DIALOGOS_LOCAL);
+        if (no.escolhas.every(e => e.usado)) {
+          set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null });
+          return;
+        }
+        set({ noAtualData: no, noDialogoAtual: no.id });
+      });
   },
 
   fecharDialogo: () => set({
@@ -564,7 +568,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     noAtualData:    null,
   }),
 
-  // Avança na árvore de diálogos via API (Issue #6 — Árvore de Decisão)
   avancarDialogo: (noAtualId, index) => {
     const { partidaId } = get();
 
@@ -575,14 +578,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       const escolha = no.escolhas[index];
       if (!escolha || escolha.usado) return;
 
-      // Registra a escolha feita neste nó (qualquer nível da árvore)
-      const prevVisited = npcVisitedChoices[npcAtual ?? ''] ?? {};
-      const prevTaken   = prevVisited[noAtualId] ?? [];
-      const newTaken    = prevTaken.includes(index) ? prevTaken : [...prevTaken, index];
+      const prevVisited    = npcVisitedChoices[npcAtual ?? ''] ?? {};
+      const prevTaken      = prevVisited[noAtualId] ?? [];
+      const newTaken       = prevTaken.includes(index) ? prevTaken : [...prevTaken, index];
       const newNodeVisited = { ...prevVisited, [noAtualId]: newTaken };
       const newNpcVisited  = { ...npcVisitedChoices, [npcAtual ?? '']: newNodeVisited };
 
-      // Recalcula quais escolhas raiz estão completamente exploradas
       const thisNpc = npcs.find(n => n.id === npcAtual);
       const exhaustedRoots = thisNpc
         ? computeExhaustedRootChoices(thisNpc.dialogoInicial, newNodeVisited, DIALOGOS_LOCAL)
@@ -597,7 +598,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       if (escolha.proximoId) {
         const rawProximo = DIALOGOS_LOCAL[escolha.proximoId] ?? null;
-        // Aplica visitado/usado em todos os filhos do próximo nó
         const proximo = rawProximo ? prepareNodeChoices(rawProximo, newNodeVisited, DIALOGOS_LOCAL) : null;
         set(s => ({ xp: s.xp + escolha.xp, noDialogoAtual: escolha.proximoId, noAtualData: proximo }));
       } else {
@@ -612,7 +612,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    // Modo online: registra escolha raiz otimisticamente (API confirma no retorno)
+    // Modo online: registra escolha raiz otimisticamente
     const npcAtualOnline = get().npcAtual;
     const npcOnline = npcAtualOnline ? get().npcs.find(n => n.id === npcAtualOnline) : null;
     if (npcOnline && noAtualId === npcOnline.dialogoInicial) {
@@ -632,14 +632,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (!data) return;
-
         const { proximoNo, pistaBloqueada, xpTotal } = data;
-
         if (xpTotal !== undefined) set({ xp: xpTotal });
-
-        // coleta automática de pista desbloqueada pelo diálogo
         if (pistaBloqueada) get().coletarPista(pistaBloqueada as string);
-
         if (proximoNo) {
           const no = proximoNo as NoDialogo;
           set({ noDialogoAtual: no.id, noAtualData: no });
@@ -654,12 +649,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     notificacoes: state.notificacoes.filter(n => n.id !== id),
   })),
 
-  // Carrega rota TSP das pistas pendentes (Issue #8)
   carregarRota: () => {
     const { partidaId, pistas, posicao } = get();
 
     if (!partidaId) {
-      // Fallback offline: vizinho mais próximo a partir da posição atual
       const pendentes = pistas.filter(p => !p.coletada);
       const rota: RotaTSPItem[] = [];
       const restantes = pendentes.map(p => ({ id: p.id, x: p.celula.x, y: p.celula.y }));
@@ -693,7 +686,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (mostrandoRota) {
       set({ mostrandoRota: false });
     } else {
-      get().carregarRota(); // sempre re-fetcha para garantir rota atualizada
+      get().carregarRota();
     }
   },
 }));
