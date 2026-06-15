@@ -5,7 +5,6 @@ const Partida   = require('../models/Partida');
 const Pista     = require('../models/Pista');
 const Suspeito  = require('../models/Suspeito');
 
-// POST /api/partida — cria nova partida no banco e retorna o ID
 const criarPartida = async (req, res) => {
   try {
     const partida = await Partida.create({
@@ -13,7 +12,7 @@ const criarPartida = async (req, res) => {
       celulasReveladas: [{ x: 0, y: 0 }],
       pistasColetadas: [],
       xp: 0,
-      status: 'ativa',
+      status: 'em_andamento', // corrigido: era 'ativa'
     });
     res.status(201).json({ partidaId: partida._id });
   } catch (err) {
@@ -21,7 +20,6 @@ const criarPartida = async (req, res) => {
   }
 };
 
-// GET /api/partida/:id — retorna estado completo da partida
 const getPartida = async (req, res) => {
   try {
     const partida = await Partida.findById(req.params.id);
@@ -32,7 +30,6 @@ const getPartida = async (req, res) => {
   }
 };
 
-// GET /api/partida/:id/inventario — retorna pistas ordenadas pelo MaxHeap
 const getInventario = async (req, res) => {
   try {
     const partida = await Partida.findById(req.params.id);
@@ -52,7 +49,6 @@ const getInventario = async (req, res) => {
   }
 };
 
-// POST /api/partida/:id/coletar — insere pista no heap e persiste
 const coletarPista = async (req, res) => {
   try {
     const { pistaId } = req.body;
@@ -66,7 +62,12 @@ const coletarPista = async (req, res) => {
     if (jaColetada) return res.status(409).json({ erro: 'Pista já coletada' });
 
     partida.pistasColetadas.push({
-      id: pista.id, nome: pista.nome, peso: pista.peso, descricao: pista.descricao
+      id:          pista.id,
+      nome:        pista.nome,
+      descricao:   pista.descricao,
+      peso:        pista.peso,
+      localizacao: pista.localizacao ?? pista.local ?? 'Mansão Blackwood', // compatível com seed do João
+      categoria:   pista.categoria  ?? 'evidencia_fisica',
     });
     partida.xp += pista.peso * 10;
     await partida.save();
@@ -80,7 +81,6 @@ const coletarPista = async (req, res) => {
   }
 };
 
-// GET /api/partida/:id/rota — calcula rota TSP com pistas pendentes
 const getRota = async (req, res) => {
   try {
     const partida = await Partida.findById(req.params.id);
@@ -103,7 +103,6 @@ const getRota = async (req, res) => {
   }
 };
 
-// POST /api/partida/:id/acusar — top3 do heap + veredicto
 const acusar = async (req, res) => {
   try {
     const { suspeitoId } = req.body;
@@ -134,7 +133,6 @@ const acusar = async (req, res) => {
   }
 };
 
-// GET /api/partida/:id/visao — campo de visão BFS
 const getVisao = async (req, res) => {
   try {
     const partida = await Partida.findById(req.params.id);
@@ -147,4 +145,3 @@ const getVisao = async (req, res) => {
 };
 
 module.exports = { criarPartida, getPartida, getInventario, coletarPista, getRota, acusar, getVisao };
-
