@@ -141,7 +141,7 @@
 .pista-card-topo {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
 }
 
@@ -149,13 +149,18 @@
   font-size: 0.8rem;
   color: #e8d5a3;
   flex: 1;
+  min-width: 0;
   line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .pista-peso {
   font-size: 0.75rem;
   font-weight: bold;
   flex-shrink: 0;
+  white-space: nowrap;
+  margin-top: 1px;
 }
 
 .pista-card--alta   .pista-peso { color: #e05555; }
@@ -165,8 +170,37 @@
 .pista-descricao {
   font-size: 0.72rem;
   color: #7a6040;
-  margin: 0.3rem 0 0;
+  margin: 0.55rem 0 0;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   line-height: 1.4;
+}
+
+/* ── botão acusar ───────────────────────────────────────────────────────── */
+
+.hud-acusar {
+  padding: 0.75rem;
+  border-top: 1px solid #3a2c1a;
+}
+
+.btn-acusar {
+  width: 100%;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px solid #8a2020;
+  border-radius: 4px;
+  color: #c04040;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-acusar:hover {
+  background: #8a2020;
+  color: #fff;
 }
 
 /* ── notificações ───────────────────────────────────────────────────────── */
