@@ -74,7 +74,9 @@ interface GameState {
   notificacoes: Notificacao[];
   rotaTSP: RotaTSPItem[];
   mostrandoRota: boolean;
-  // índices das escolhas raiz já usadas por NPC — impede repetição de rota
+  // npcId → nodeId → índices de escolhas já tomadas naquele nó
+  npcVisitedChoices: Record<string, Record<string, number[]>>;
+  // índices das escolhas raiz COMPLETAMENTE exploradas por NPC (subárvore toda percorrida)
   escolhasRaizUsadas: Record<string, number[]>;
 
   mover: (dx: number, dy: number) => void;
@@ -350,6 +352,39 @@ const NPCS_MOCK: NPC[] = [
   { id: 'harlow',   nome: 'Dr. Harlow',       celula: { x: 9, y: 4 }, dialogoInicial: 'D0' },
 ];
 
+// ─── Helpers para rastreamento de subárvores de diálogo ──────────────────────
+
+// Retorna true quando todos os branches de nodeId foram percorridos
+function isNodeFullyExplored(
+  nodeId: string | null,
+  npcVisited: Record<string, number[]>,
+  dialogs: Record<string, NoDialogo>
+): boolean {
+  if (!nodeId) return true;
+  const node = dialogs[nodeId];
+  if (!node) return true;
+  const taken = npcVisited[nodeId] ?? [];
+  for (let i = 0; i < node.escolhas.length; i++) {
+    if (!taken.includes(i)) return false;
+    if (!isNodeFullyExplored(node.escolhas[i].proximoId, npcVisited, dialogs)) return false;
+  }
+  return true;
+}
+
+// Retorna os índices de escolhas raiz cuja subárvore completa foi explorada
+function computeExhaustedRootChoices(
+  rootNodeId: string,
+  npcVisited: Record<string, number[]>,
+  dialogs: Record<string, NoDialogo>
+): number[] {
+  const root = dialogs[rootNodeId];
+  if (!root) return [];
+  const rootTaken = npcVisited[rootNodeId] ?? [];
+  return root.escolhas
+    .map((_, i) => i)
+    .filter(i => rootTaken.includes(i) && isNodeFullyExplored(root.escolhas[i].proximoId, npcVisited, dialogs));
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 const POS_INICIAL      = { x: 0, y: 0 };
@@ -371,6 +406,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   notificacoes:     [],
   rotaTSP:             [],
   mostrandoRota:       false,
+  npcVisitedChoices:   {},
   escolhasRaizUsadas:  {},
 
   // Cria a partida no backend ao iniciar o jogo
@@ -460,26 +496,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     const npc = npcs.find(n => n.id === npcId);
     if (!npc) return;
 
-    const usadas = escolhasRaizUsadas[npcId] ?? [];
+    // Modo offline: usa npcVisitedChoices para determinar quais rotas raiz foram completamente exploradas
+    if (!partidaId) {
+      const raw = DIALOGOS_LOCAL[npc.dialogoInicial] ?? null;
+      if (!raw) return;
+      const npcVisited = get().npcVisitedChoices[npcId] ?? {};
+      const exhausted  = computeExhaustedRootChoices(npc.dialogoInicial, npcVisited, DIALOGOS_LOCAL);
+      const noMarcado: NoDialogo = {
+        ...raw,
+        escolhas: raw.escolhas.map((e, i) => ({ ...e, usado: exhausted.includes(i) })),
+      };
+      if (noMarcado.escolhas.every(e => e.usado)) return; // NPC completamente explorado
+      set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: noMarcado.id, noAtualData: noMarcado });
+      return;
+    }
 
-    // Aplica marcação de escolhas usadas e verifica esgotamento
-    const prepararNo = (no: NoDialogo): NoDialogo | null => {
+    // Modo online: prepara nó com base em escolhasRaizUsadas (sincronizadas com a API)
+    const usadas = escolhasRaizUsadas[npcId] ?? [];
+    const prepararNoOnline = (no: NoDialogo): NoDialogo | null => {
       const noMarcado: NoDialogo = {
         ...no,
         escolhas: no.escolhas.map((e, i) => ({ ...e, usado: usadas.includes(i) })),
       };
-      const todasUsadas = noMarcado.escolhas.every(e => e.usado);
-      return todasUsadas ? null : noMarcado;
+      return noMarcado.escolhas.every(e => e.usado) ? null : noMarcado;
     };
-
-    if (!partidaId) {
-      const raw = DIALOGOS_LOCAL[npc.dialogoInicial] ?? null;
-      if (!raw) return;
-      const no = prepararNo(raw);
-      if (!no) return; // NPC esgotado
-      set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: no.id, noAtualData: no });
-      return;
-    }
 
     set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: npc.dialogoInicial, noAtualData: null });
 
@@ -491,7 +531,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.no) {
-          const no = prepararNo(data.no as NoDialogo);
+          const no = prepararNoOnline(data.no as NoDialogo);
           if (!no) {
             set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null });
             return;
@@ -515,28 +555,31 @@ export const useGameStore = create<GameState>((set, get) => ({
   avancarDialogo: (noAtualId, index) => {
     const { partidaId } = get();
 
-    // Regista escolha raiz se estamos no nó inicial do NPC
-    const registrarRaiz = (npcAtual: string | null, index: number) => {
-      if (!npcAtual) return;
-      const npc = get().npcs.find(n => n.id === npcAtual);
-      if (npc && noAtualId === npc.dialogoInicial) {
-        set(s => ({
-          escolhasRaizUsadas: {
-            ...s.escolhasRaizUsadas,
-            [npcAtual]: [...(s.escolhasRaizUsadas[npcAtual] ?? []), index],
-          },
-        }));
-      }
-    };
-
     if (!partidaId) {
-      const { npcAtual } = get();
+      const { npcAtual, npcs, npcVisitedChoices } = get();
       const no = DIALOGOS_LOCAL[noAtualId];
       if (!no) return;
       const escolha = no.escolhas[index];
       if (!escolha || escolha.usado) return;
 
-      registrarRaiz(npcAtual, index);
+      // Registra a escolha feita neste nó (qualquer nível da árvore)
+      const prevVisited = npcVisitedChoices[npcAtual ?? ''] ?? {};
+      const prevTaken   = prevVisited[noAtualId] ?? [];
+      const newTaken    = prevTaken.includes(index) ? prevTaken : [...prevTaken, index];
+      const newNodeVisited = { ...prevVisited, [noAtualId]: newTaken };
+      const newNpcVisited  = { ...npcVisitedChoices, [npcAtual ?? '']: newNodeVisited };
+
+      // Recalcula quais escolhas raiz estão completamente exploradas
+      const thisNpc = npcs.find(n => n.id === npcAtual);
+      const exhaustedRoots = thisNpc
+        ? computeExhaustedRootChoices(thisNpc.dialogoInicial, newNodeVisited, DIALOGOS_LOCAL)
+        : [];
+
+      set(s => ({
+        npcVisitedChoices:  newNpcVisited,
+        escolhasRaizUsadas: { ...s.escolhasRaizUsadas, ...(npcAtual ? { [npcAtual]: exhaustedRoots } : {}) },
+      }));
+
       if (escolha.pistaBloqueada) get().coletarPista(escolha.pistaBloqueada);
 
       if (escolha.proximoId) {
@@ -554,8 +597,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    // Registra imediatamente a escolha raiz (antes da resposta da API)
-    registrarRaiz(get().npcAtual, index);
+    // Modo online: registra escolha raiz otimisticamente (API confirma no retorno)
+    const npcAtualOnline = get().npcAtual;
+    const npcOnline = npcAtualOnline ? get().npcs.find(n => n.id === npcAtualOnline) : null;
+    if (npcOnline && noAtualId === npcOnline.dialogoInicial) {
+      set(s => ({
+        escolhasRaizUsadas: {
+          ...s.escolhasRaizUsadas,
+          [npcAtualOnline!]: [...(s.escolhasRaizUsadas[npcAtualOnline!] ?? []), index],
+        },
+      }));
+    }
 
     fetch(`${API}/${partidaId}/escolha`, {
       method: 'POST',

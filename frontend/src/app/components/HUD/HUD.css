@@ -166,6 +166,8 @@
   font-size: 0.72rem;
   color: #7a6040;
   margin: 0.55rem 0 0;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   line-height: 1.4;
 }
 
