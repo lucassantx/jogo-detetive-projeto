@@ -163,3 +163,5 @@ const getVisao = async (req, res) => {
 };
 
 module.exports = { criarPartida, getPartida, getInventario, coletarPista, getRota, acusar, getVisao };
+
+// quebra para commit
