@@ -6,26 +6,48 @@ const TYPEWRITER_MS = 30;
 
 const DialogueScreen: React.FC = () => {
   const dialogoAtivo   = useGameStore(s => s.dialogoAtivo);
-  const noDialogoAtual = useGameStore(s => s.noDialogoAtual);
-  const dialogos       = useGameStore(s => s.dialogos);
+  const noAtualData    = useGameStore(s => s.noAtualData);
+  const npcAtual       = useGameStore(s => s.npcAtual);
   const avancarDialogo = useGameStore(s => s.avancarDialogo);
   const fecharDialogo  = useGameStore(s => s.fecharDialogo);
 
   const [displayText,   setDisplayText]   = useState('');
   const [textoCompleto, setTextoCompleto] = useState(false);
   const [visivel,       setVisivel]       = useState(false);
+  const [aguardando,    setAguardando]    = useState(false);
+
+  const npcDoNo     = useRef<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const no = noDialogoAtual ? dialogos[noDialogoAtual] : null;
-
-  // Exibe/esconde o painel
+  // abre o painel quando diálogo inicia; fecha quando termina
   useEffect(() => {
-    if (dialogoAtivo) setVisivel(true);
+    if (dialogoAtivo) {
+      setVisivel(true);
+      setAguardando(false);
+    } else {
+      // dialogo encerrado pelo store — fecha o painel
+      setVisivel(false);
+      setAguardando(false);
+      setDisplayText('');
+      setTextoCompleto(false);
+    }
   }, [dialogoAtivo]);
 
-  // Typewriter: reinicia a cada nó novo
+  // limpa texto ao trocar de NPC
   useEffect(() => {
-    if (!no) return;
+    if (!dialogoAtivo) return;
+    if (npcAtual !== npcDoNo.current) {
+      setDisplayText('');
+      setTextoCompleto(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  }, [npcAtual, dialogoAtivo]);
+
+  // typewriter dispara quando noAtualData chega
+  useEffect(() => {
+    if (!noAtualData) return;
+    npcDoNo.current = npcAtual;
+    setAguardando(false);
     setDisplayText('');
     setTextoCompleto(false);
 
@@ -34,50 +56,48 @@ const DialogueScreen: React.FC = () => {
     let idx = 0;
     intervalRef.current = setInterval(() => {
       idx++;
-      setDisplayText(no.texto.slice(0, idx));
-      if (idx >= no.texto.length) {
+      setDisplayText(noAtualData.texto.slice(0, idx));
+      if (idx >= noAtualData.texto.length) {
         clearInterval(intervalRef.current!);
         setTextoCompleto(true);
       }
     }, TYPEWRITER_MS);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [noDialogoAtual]);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [noAtualData]);
 
-  // Clique no texto avança o typewriter
   const skipTypewriter = useCallback(() => {
-    if (!no || textoCompleto) return;
+    if (!noAtualData || textoCompleto) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setDisplayText(no.texto);
+    setDisplayText(noAtualData.texto);
     setTextoCompleto(true);
-  }, [no, textoCompleto]);
+  }, [noAtualData, textoCompleto]);
 
-  const handleEscolha = (proximoId: string | null, xpGanho: number, pistaBloqueada: string | null) => {
-    setVisivel(false);
-    setTimeout(() => {
-      avancarDialogo(proximoId, xpGanho, pistaBloqueada);
-      if (proximoId) setVisivel(true);
-    }, 260);
-  };
+  const handleEscolha = useCallback((noId: string, index: number) => {
+    if (aguardando) return;
+    setAguardando(true);
+    setTextoCompleto(false);
+    setDisplayText('');
+    avancarDialogo(noId, index);
+  }, [aguardando, avancarDialogo]);
 
-  const handleEncerrar = () => {
-    setVisivel(false);
-    setTimeout(() => fecharDialogo(), 260);
-  };
+  const handleEncerrar = useCallback(() => {
+    fecharDialogo();
+  }, [fecharDialogo]);
 
-  if (!dialogoAtivo && !visivel) return null;
+  if (!visivel) return null;
+
+  const no = noAtualData;
 
   return (
     <div
-      className={`dialogue-overlay ${visivel ? 'dialogue-overlay--visible' : ''}`}
+      className={`dialogue-overlay dialogue-overlay--visible`}
       role="dialog"
       aria-modal="true"
       aria-label={no ? `Diálogo com ${no.npc}` : 'Diálogo'}
     >
       <div className="dialogue-screen">
-        {no && (
+        {no && !aguardando ? (
           <>
             <div className="dialogue-npc-nome">{no.npc}</div>
 
@@ -98,12 +118,22 @@ const DialogueScreen: React.FC = () => {
                   no.escolhas.map((escolha, i) => (
                     <button
                       key={i}
-                      className="dialogue-choice-btn"
-                      onClick={() =>
-                        handleEscolha(escolha.proximoId, escolha.xp, escolha.pistaBloqueada)
-                      }
+                      className={[
+                        'dialogue-choice-btn',
+                        escolha.usado            ? 'dialogue-choice-btn--usado'    : '',
+                        escolha.bloqueadaPorPista ? 'dialogue-choice-btn--bloqueada' : '',
+                        escolha.visitado && !escolha.usado && !escolha.bloqueadaPorPista
+                          ? 'dialogue-choice-btn--visitado' : '',
+                      ].filter(Boolean).join(' ')}
+                      disabled={escolha.usado || escolha.bloqueadaPorPista || aguardando}
+                      onClick={() => !escolha.usado && !escolha.bloqueadaPorPista && handleEscolha(no.id, i)}
                     >
-                      <span className="choice-xp">+{escolha.xp} XP</span>
+                      <span className="choice-xp">
+                        {escolha.usado            ? '✓'
+                          : escolha.bloqueadaPorPista ? '🔒'
+                          : escolha.visitado       ? '↩'
+                          : `+${escolha.xp} XP`}
+                      </span>
                       {escolha.texto}
                     </button>
                   ))
@@ -118,7 +148,11 @@ const DialogueScreen: React.FC = () => {
               </div>
             )}
           </>
-        )}
+        ) : aguardando ? (
+          <div className="dialogue-carregando" aria-live="polite">
+            Carregando…
+          </div>
+        ) : null}
       </div>
     </div>
   );

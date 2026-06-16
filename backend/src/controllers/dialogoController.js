@@ -2,19 +2,18 @@ const ArvoreDecisao = require('../structures/ArvoreDecisao');
 const Partida = require('../models/Partida');
 const dialogos = require('../seed/dialogos');
 
-// mapa NPC por célula: qual nó raiz disparar ao entrar na célula
 const NPC_POR_CELULA = {
-  '1,1': 'A0', // Biblioteca — Adelaide Cross
-  '0,1': 'B0', // Escritório — Victor Blackwood
-  '0,2': 'C0', // Quarto do Guarda — Fynn O'Brien
+  '3,4': 'A0', // Adelaide Cross
+  '7,6': 'B0', // Victor Blackwood
+  '1,9': 'C0', // Fynn O'Brien
+  '9,4': 'D0', // Dr. Harlow
 };
 
 const arvore = new ArvoreDecisao(dialogos);
 
-// POST /api/partida/:id/interagir — inicia diálogo da célula, retorna nó raiz
 const interagir = async (req, res) => {
   try {
-    const { celula } = req.body; // { x: number, y: number }
+    const { celula } = req.body;
     const key = `${celula.x},${celula.y}`;
     const noRaizId = NPC_POR_CELULA[key];
 
@@ -31,7 +30,6 @@ const interagir = async (req, res) => {
   }
 };
 
-// POST /api/partida/:id/escolha — avança na árvore e retorna próximo nó
 const escolha = async (req, res) => {
   try {
     const { noAtualId, index } = req.body;
@@ -41,14 +39,11 @@ const escolha = async (req, res) => {
     const resultado = arvore.escolher(noAtualId, index);
     if (!resultado) return res.status(404).json({ erro: 'Escolha inválida' });
 
-    // concede XP ao jogador
     partida.xp += resultado.xp || 0;
 
-    // se a escolha desbloqueia pista, anota no estado
     let pistaBloqueada = null;
     if (resultado.pistaBloqueada) {
       pistaBloqueada = resultado.pistaBloqueada;
-      // a coleta efetiva ocorre via /coletar; aqui só sinalizamos
     }
 
     await partida.save();

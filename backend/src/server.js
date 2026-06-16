@@ -13,6 +13,15 @@ app.use('/api', routes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+// captura erros de rotas async sem try/catch
+app.use((err, req, res, next) => {
+  console.error('=== ERRO ===');
+  console.error('Rota:', req.method, req.path);
+  console.error('Body:', JSON.stringify(req.body));
+  console.error(err.stack);
+  res.status(500).json({ erro: err.message });
+});
+
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
