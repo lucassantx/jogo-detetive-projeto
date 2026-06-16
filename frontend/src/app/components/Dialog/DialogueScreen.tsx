@@ -120,14 +120,19 @@ const DialogueScreen: React.FC = () => {
                       key={i}
                       className={[
                         'dialogue-choice-btn',
-                        escolha.usado     ? 'dialogue-choice-btn--usado'    : '',
-                        escolha.visitado && !escolha.usado ? 'dialogue-choice-btn--visitado' : '',
+                        escolha.usado            ? 'dialogue-choice-btn--usado'    : '',
+                        escolha.bloqueadaPorPista ? 'dialogue-choice-btn--bloqueada' : '',
+                        escolha.visitado && !escolha.usado && !escolha.bloqueadaPorPista
+                          ? 'dialogue-choice-btn--visitado' : '',
                       ].filter(Boolean).join(' ')}
-                      disabled={escolha.usado || aguardando}
-                      onClick={() => !escolha.usado && handleEscolha(no.id, i)}
+                      disabled={escolha.usado || escolha.bloqueadaPorPista || aguardando}
+                      onClick={() => !escolha.usado && !escolha.bloqueadaPorPista && handleEscolha(no.id, i)}
                     >
                       <span className="choice-xp">
-                        {escolha.usado ? '✓' : escolha.visitado ? '↩' : `+${escolha.xp} XP`}
+                        {escolha.usado            ? '✓'
+                          : escolha.bloqueadaPorPista ? '🔒'
+                          : escolha.visitado       ? '↩'
+                          : `+${escolha.xp} XP`}
                       </span>
                       {escolha.texto}
                     </button>

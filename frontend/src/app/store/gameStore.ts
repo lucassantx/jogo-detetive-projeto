@@ -24,9 +24,11 @@ export interface Escolha {
   texto: string;
   proximoId: string | null;
   pistaBloqueada: string | null;
+  pistaRequerida?: string | null; // id da pista que deve estar coletada para desbloquear esta escolha
   xp: number;
-  visitado?: boolean; // tomada pelo menos uma vez — visual ✓, ainda clicável se há ramos abaixo
-  usado?: boolean;    // subárvore inteiramente explorada — desabilitado
+  visitado?: boolean;         // tomada ao menos uma vez — indicador ↩, ainda clicável se há ramos
+  usado?: boolean;            // subárvore inteiramente explorada — desabilitado com riscado
+  bloqueadaPorPista?: boolean; // pista requerida ainda não coletada — desabilitado com cadeado
 }
 
 export interface NoDialogo {
@@ -127,7 +129,7 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
     escolhas: [
       { texto: 'Onde estava às 23h de ontem?',            proximoId: 'A1',  pistaBloqueada: null, xp: 10 },
       { texto: 'O senhor tinha inimigos?',                proximoId: 'A2',  pistaBloqueada: null, xp: 10 },
-      { texto: 'Vi um frasco estranho aqui. O que era?',  proximoId: 'A3',  pistaBloqueada: null, xp: 15 },
+      { texto: 'Vi um frasco estranho aqui. O que era?',  proximoId: 'A3',  pistaBloqueada: null, pistaRequerida: 'frasco_arsenico', xp: 15 },
     ]},
 
   A1: { id: 'A1', npc: 'Adelaide Cross',
@@ -174,9 +176,9 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
   A3: { id: 'A3', npc: 'Adelaide Cross',
     texto: 'Meu Deus. Eu vi esse frasco no cofre, semana passada. O senhor me pediu para não contar a ninguém. Disse que era para os ratos.',
     escolhas: [
-      { texto: 'Quem mais sabia da combinação do cofre?',    proximoId: 'A3a', pistaBloqueada: null,          xp: 25 },
-      { texto: 'Havia ratos na mansão?',                     proximoId: 'A3b', pistaBloqueada: null,          xp: 20 },
-      { texto: 'Você escreveu uma carta anônima para ele?',  proximoId: 'A3c', pistaBloqueada: null,          xp: 30 },
+      { texto: 'Quem mais sabia da combinação do cofre?',    proximoId: 'A3a', pistaBloqueada: null, xp: 25 },
+      { texto: 'Havia ratos na mansão?',                     proximoId: 'A3b', pistaBloqueada: null, xp: 20 },
+      { texto: 'Você escreveu uma carta anônima para ele?',  proximoId: 'A3c', pistaBloqueada: null, pistaRequerida: 'carta_anonima', xp: 30 },
     ]},
   A3a: { id: 'A3a', npc: 'Adelaide Cross',
     texto: 'O senhor Edmund, claro. O Victor — Sir Edmund lhe deu a combinação quando ele tinha vinte e poucos anos, numa época em que havia confiança entre eles. E o Fynn guarda uma chave sobressalente para emergências. Três pessoas. E agora o senhor faz quatro.',
@@ -230,7 +232,7 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
   B2: { id: 'B2', npc: 'Victor Blackwood',
     texto: 'Rumores de empregada. Meu tio era excêntrico mas não idiota — não jogaria fora vinte anos de família por capricho.',
     escolhas: [
-      { texto: 'Tenho o testamento com anotações em sua caligrafia.', proximoId: 'B2a', pistaBloqueada: 'testamento_rasura', xp: 30 },
+      { texto: 'Tenho o testamento com anotações em sua caligrafia.', proximoId: 'B2a', pistaBloqueada: null, pistaRequerida: 'testamento_rasura', xp: 30 },
       { texto: 'Entendido. Por enquanto.',                            proximoId: null,  pistaBloqueada: null,                 xp:  5 },
     ]},
   B2a: { id: 'B2a', npc: 'Victor Blackwood',
@@ -240,9 +242,9 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
   B3: { id: 'B3', npc: 'Victor Blackwood',
     texto: 'A estufa? Claro que conheço. Passei por lá ontem à tarde. Meu tio cultivava coisas interessantes. Era um hobby antigo dele.',
     escolhas: [
-      { texto: 'O que você notou na estufa?',          proximoId: 'B3a', pistaBloqueada: null,             xp: 15 },
-      { texto: 'Você colheu alguma coisa?',             proximoId: 'B3b', pistaBloqueada: null,             xp: 20 },
-      { texto: 'Sabe identificar plantas medicinais?',  proximoId: 'B3c', pistaBloqueada: 'planta_arsenico', xp: 30 },
+      { texto: 'O que você notou na estufa?',          proximoId: 'B3a', pistaBloqueada: null, xp: 15 },
+      { texto: 'Você colheu alguma coisa?',             proximoId: 'B3b', pistaBloqueada: null, xp: 20 },
+      { texto: 'Sabe identificar plantas medicinais?',  proximoId: 'B3c', pistaBloqueada: null, pistaRequerida: 'planta_arsenico', xp: 30 },
     ]},
   B3a: { id: 'B3a', npc: 'Victor Blackwood',
     texto: 'Plantas. Muitas plantas. Meu tio tinha gosto para isso. Nada que eu não esperasse encontrar.',
@@ -302,9 +304,9 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
   D0: { id: 'D0', npc: 'Dr. Harlow',
     texto: 'Sim. Parada cardíaca. Edmund tinha histórico de problemas cardíacos — menos graves, mas presentes.',
     escolhas: [
-      { texto: 'O senhor examinou o corpo com cuidado?',                                           proximoId: 'D1', pistaBloqueada: null, xp: 15 },
-      { texto: 'Edmund te contou que estava doente?',                                              proximoId: 'D2', pistaBloqueada: null, xp: 20 },
-      { texto: 'Por que assinou parada cardíaca se havia resíduo suspeito na cozinha?',            proximoId: 'D3', pistaBloqueada: null, xp: 30 },
+      { texto: 'O senhor examinou o corpo com cuidado?',                                proximoId: 'D1', pistaBloqueada: null, xp: 15 },
+      { texto: 'Edmund te contou que estava doente?',                                 proximoId: 'D2', pistaBloqueada: null, xp: 20 },
+      { texto: 'Por que assinou parada cardíaca se havia resíduo suspeito na cozinha?', proximoId: 'D3', pistaBloqueada: null, pistaRequerida: 'frasco_arsenico', xp: 30 },
     ]},
 
   D1: { id: 'D1', npc: 'Dr. Harlow',
@@ -352,6 +354,58 @@ const NPCS_MOCK: NPC[] = [
   { id: 'harlow',   nome: 'Dr. Harlow',       celula: { x: 9, y: 4 }, dialogoInicial: 'D0' },
 ];
 
+// ─── TSP — Held-Karp exato (O(n²·2ⁿ), ótimo para n ≤ 15) ───────────────────
+// Retorna a ordem de visita das pistas pendentes que minimiza a distância total
+// partindo da posição atual do detetive (distância Manhattan no grid 10×10).
+
+function tspHeldKarp(
+  start: { x: number; y: number },
+  targets: { id: string; x: number; y: number }[]
+): { id: string; x: number; y: number }[] {
+  const n = targets.length;
+  if (n === 0) return [];
+  if (n === 1) return [targets[0]];
+
+  const man = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+  const fromStart = targets.map(t => man(start, t));
+  const d         = targets.map(a => targets.map(b => man(a, b)));
+
+  const INF = 1e9;
+  const dp  = Array.from({ length: 1 << n }, () => new Array<number>(n).fill(INF));
+  const par = Array.from({ length: 1 << n }, () => new Array<number>(n).fill(-1));
+
+  for (let i = 0; i < n; i++) dp[1 << i][i] = fromStart[i];
+
+  for (let mask = 1; mask < (1 << n); mask++) {
+    for (let u = 0; u < n; u++) {
+      if (!(mask & (1 << u)) || dp[mask][u] === INF) continue;
+      for (let v = 0; v < n; v++) {
+        if (mask & (1 << v)) continue;
+        const nm = mask | (1 << v);
+        const nc = dp[mask][u] + d[u][v];
+        if (nc < dp[nm][v]) { dp[nm][v] = nc; par[nm][v] = u; }
+      }
+    }
+  }
+
+  const full = (1 << n) - 1;
+  let last = 0;
+  for (let v = 1; v < n; v++) if (dp[full][v] < dp[full][last]) last = v;
+
+  const path: number[] = [];
+  let mask = full, cur = last;
+  while (cur !== -1) {
+    path.push(cur);
+    const prev = par[mask][cur];
+    mask ^= 1 << cur;
+    cur = prev;
+  }
+  path.reverse();
+  return path.map(i => targets[i]);
+}
+
 // ─── Helpers para rastreamento de subárvores de diálogo ──────────────────────
 
 function isNodeFullyExplored(
@@ -373,14 +427,16 @@ function isNodeFullyExplored(
 function prepareNodeChoices(
   node: NoDialogo,
   npcVisited: Record<string, number[]>,
+  pistasColetadasIds: Set<string>,
   dialogs: Record<string, NoDialogo>
 ): NoDialogo {
   return {
     ...node,
     escolhas: node.escolhas.map((e, i) => {
+      const pistaOk   = !e.pistaRequerida || pistasColetadasIds.has(e.pistaRequerida);
       const taken     = (npcVisited[node.id] ?? []).includes(i);
-      const exhausted = taken && isNodeFullyExplored(e.proximoId, npcVisited, dialogs);
-      return { ...e, visitado: taken, usado: exhausted };
+      const exhausted = pistaOk && taken && isNodeFullyExplored(e.proximoId, npcVisited, dialogs);
+      return { ...e, bloqueadaPorPista: !pistaOk, visitado: taken && pistaOk, usado: exhausted };
     }),
   };
 }
@@ -514,9 +570,10 @@ mover: (dx, dy) => {
     if (!partidaId) {
       const raw = DIALOGOS_LOCAL[npc.dialogoInicial] ?? null;
       if (!raw) return;
-      const npcVisited = get().npcVisitedChoices[npcId] ?? {};
-      const noMarcado  = prepareNodeChoices(raw, npcVisited, DIALOGOS_LOCAL);
-      if (noMarcado.escolhas.every(e => e.usado)) return;
+      const npcVisited   = get().npcVisitedChoices[npcId] ?? {};
+      const pistaIds     = new Set(get().pistasColetadas.map(p => p.id));
+      const noMarcado    = prepareNodeChoices(raw, npcVisited, pistaIds, DIALOGOS_LOCAL);
+      if (noMarcado.escolhas.every(e => e.usado || e.bloqueadaPorPista)) return;
       set(s => ({
         dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: noMarcado.id, noAtualData: noMarcado,
         npcsInterrogados: new Set(s.npcsInterrogados).add(npcId),
@@ -565,8 +622,9 @@ mover: (dx, dy) => {
           return;
         }
         const npcVisited = get().npcVisitedChoices[npcId] ?? {};
-        const no = prepareNodeChoices(raw, npcVisited, DIALOGOS_LOCAL);
-        if (no.escolhas.every(e => e.usado)) {
+        const pistaIds   = new Set(get().pistasColetadas.map(p => p.id));
+        const no         = prepareNodeChoices(raw, npcVisited, pistaIds, DIALOGOS_LOCAL);
+        if (no.escolhas.every(e => e.usado || e.bloqueadaPorPista)) {
           set({ dialogoAtivo: false, noDialogoAtual: null, npcAtual: null, noAtualData: null });
           return;
         }
@@ -590,6 +648,7 @@ mover: (dx, dy) => {
       if (!no) return;
       const escolha = no.escolhas[index];
       if (!escolha || escolha.usado) return;
+      if (escolha.pistaRequerida && !get().pistasColetadas.some(p => p.id === escolha.pistaRequerida)) return;
 
       const prevVisited    = npcVisitedChoices[npcAtual ?? ''] ?? {};
       const prevTaken      = prevVisited[noAtualId] ?? [];
@@ -611,7 +670,8 @@ mover: (dx, dy) => {
 
       if (escolha.proximoId) {
         const rawProximo = DIALOGOS_LOCAL[escolha.proximoId] ?? null;
-        const proximo = rawProximo ? prepareNodeChoices(rawProximo, newNodeVisited, DIALOGOS_LOCAL) : null;
+        const pistaIds   = new Set(get().pistasColetadas.map(p => p.id));
+        const proximo    = rawProximo ? prepareNodeChoices(rawProximo, newNodeVisited, pistaIds, DIALOGOS_LOCAL) : null;
         set(s => ({ xp: s.xp + escolha.xp, noDialogoAtual: escolha.proximoId, noAtualData: proximo }));
       } else {
         set(s => ({
@@ -667,20 +727,8 @@ mover: (dx, dy) => {
 
     if (!partidaId) {
       const pendentes = pistas.filter(p => !p.coletada);
-      const rota: RotaTSPItem[] = [];
-      const restantes = pendentes.map(p => ({ id: p.id, x: p.celula.x, y: p.celula.y }));
-      let atual = posicao;
-      while (restantes.length > 0) {
-        let idx = 0, minD = Infinity;
-        restantes.forEach((r, i) => {
-          const d = Math.abs(r.x - atual.x) + Math.abs(r.y - atual.y);
-          if (d < minD) { minD = d; idx = i; }
-        });
-        const proximo = restantes.splice(idx, 1)[0];
-        rota.push(proximo);
-        atual = proximo;
-      }
-      set({ rotaTSP: rota, mostrandoRota: true });
+      const targets   = pendentes.map(p => ({ id: p.id, x: p.celula.x, y: p.celula.y }));
+      set({ rotaTSP: tspHeldKarp(posicao, targets), mostrandoRota: true });
       return;
     }
 
