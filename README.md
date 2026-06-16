@@ -81,17 +81,19 @@ Se o backend estiver offline, o jogo funciona em *modo offline* com fallbacks lo
 ┌─────────────────────────────────────────────────────┐
 │  Browser — React + Zustand                          │
 │                                                     │
-│  MapScreen ──► useMovimento ──► gameStore.mover()   │
-│      │                              │               │
-│      │ SVG overlay (rota TSP)       │ POST /mover   │
-│      ▼                              ▼               │
-│  DialogueScreen ◄── noAtualData  gameStore          │
-│      │              (Zustand)       │               │
-│      │                        POST /interagir       │
-│  HUD (inventário MaxHeap)    POST /escolha          │
-│  Accusation                  GET  /rota             │
-└────────────────────────────┬────────────────────────┘
-                             │ HTTP JSON (/api/*)
+│  ┌──────────────┐    ┌──────────────────────────┐  │
+│  │  MapScreen   │    │  DialogueScreen          │  │
+│  │              │    │                          │  │
+│  │ useMovimento │    │  noAtualData (Zustand)  │  │
+│  │ gameStore.   │    │                          │  │
+│  │ mover()      │    │  HUD (MaxHeap)          │  │
+│  │              │    │  Accusation             │  │
+│  └──────────────┘    └──────────────────────────┘  │
+│         │                        │                  │
+│         └────────┬───────────────┘                  │
+│                  │ HTTP JSON (/api/*)               │
+└──────────────────┼──────────────────────────────────┘
+                             
 ┌────────────────────────────▼────────────────────────┐
 │  Express — Node.js                                  │
 │                                                     │
