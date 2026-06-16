@@ -10,6 +10,87 @@
   flex-direction: column;
   overflow: hidden;
   z-index: 100;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+.hud--fechado {
+  transform: translateX(100%);
+}
+
+.hud--aberto {
+  transform: translateX(0);
+}
+
+/* ── aba retrátil — estilo Resident Evil 4, sempre acessível ─────────────── */
+
+.hud-toggle-tab {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #1a1208;
+  border: 1px solid #3a2c1a;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  color: #d4a853;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.hud-toggle-tab:hover {
+  background: #2a1f0e;
+  border-color: #d4a853;
+  transform: translateY(-1px);
+}
+
+.hud-toggle-count {
+  font-size: 0.7rem;
+  font-weight: bold;
+  background: #d4a853;
+  color: #1a1208;
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  min-width: 1.1rem;
+  text-align: center;
+}
+
+/* ── header do painel ──────────────────────────────────────────────────── */
+
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #3a2c1a;
+  flex-shrink: 0;
+}
+
+.hud-header-titulo {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #d4a853;
+}
+
+.hud-close-btn {
+  background: transparent;
+  border: none;
+  color: #7a6040;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+}
+
+.hud-close-btn:hover {
+  color: #e8d5a3;
 }
 
 /* ── XP e level ─────────────────────────────────────────────────────────── */
@@ -203,17 +284,42 @@
   color: #fff;
 }
 
+.btn-acusar:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #5a3030;
+  color: #7a5050;
+}
+
+.btn-acusar:disabled:hover {
+  background: transparent;
+  color: #7a5050;
+}
+
+.hud-progresso {
+  margin: 0.5rem 0 0;
+  font-size: 0.68rem;
+  color: #7a6040;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
 /* ── notificações ───────────────────────────────────────────────────────── */
 
 .notificacoes-container {
   position: fixed;
-  right: 250px;
+  right: 1.5rem;
   bottom: 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   z-index: 300;
   pointer-events: none;
+  transition: right 0.3s ease;
+}
+
+.notificacoes-container--recuado {
+  right: 260px;
 }
 
 .pista-notification {
