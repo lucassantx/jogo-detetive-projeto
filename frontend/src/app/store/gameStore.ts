@@ -333,16 +333,16 @@ const DIALOGOS_LOCAL: Record<string, NoDialogo> = {
 // ─── Dados estáticos do mapa (posições conforme backend/src/seed/) ────────────
 
 const PISTAS_MOCK: Pista[] = [
-  { id: 'frasco_arsenico',   nome: 'Frasco de arsênico vazio',    descricao: 'Frasco de vidro com resíduos de arsênico.',   peso: 10, celula: { x: 2, y: 1 }, coletada: false },
-  { id: 'carta_anonima',     nome: 'Carta anônima rasgada',       descricao: 'Pedaços de carta com letra disfarçada.',       peso: 8,  celula: { x: 4, y: 0 }, coletada: false },
-  { id: 'testamento_rasura', nome: 'Testamento com rasura',       descricao: 'Testamento oficial com uma linha rasurada.',   peso: 9,  celula: { x: 7, y: 2 }, coletada: false },
-  { id: 'copo_residuo',      nome: 'Copo com resíduo de chá',     descricao: 'Copo com sedimento suspeito no fundo.',        peso: 7,  celula: { x: 1, y: 4 }, coletada: false },
-  { id: 'planta_arsenico',   nome: 'Planta de arsênico colhida',  descricao: 'Ramo fresco de planta venenosa.',              peso: 8,  celula: { x: 5, y: 3 }, coletada: false },
-  { id: 'diario_edmund',     nome: 'Diário de Sir Edmund',        descricao: 'Diário pessoal com entradas suspeitas.',       peso: 6,  celula: { x: 0, y: 6 }, coletada: false },
-  { id: 'foto_rasgada',      nome: 'Foto rasgada',                descricao: 'Fotografia rasgada ao meio.',                  peso: 5,  celula: { x: 3, y: 7 }, coletada: false },
-  { id: 'pegadas_barro',     nome: 'Pegadas no barro',            descricao: 'Marcas de botas grandes na estufa.',           peso: 7,  celula: { x: 8, y: 5 }, coletada: false },
-  { id: 'chave_extra',       nome: 'Chave extra do cofre',        descricao: 'Cópia não autorizada da chave do cofre.',      peso: 9,  celula: { x: 6, y: 8 }, coletada: false },
-  { id: 'bilhete_trem',      nome: 'Bilhete de trem cancelado',   descricao: 'Bilhete com data da noite do crime.',          peso: 6,  celula: { x: 9, y: 1 }, coletada: false },
+  { id: 'frasco_arsenico',   nome: 'Frasco de arsênico vazio',    descricao: 'Frasco de vidro com resíduos de arsênico. (1,1) Biblioteca.',                peso: 10, celula: { x: 1, y: 1 }, coletada: false },
+  { id: 'carta_anonima',     nome: 'Carta anônima rasgada',       descricao: 'Pedaços de carta com letra disfarçada. (6,1) Sala de Estar.',                peso: 8,  celula: { x: 6, y: 1 }, coletada: false },
+  { id: 'testamento_rasura', nome: 'Testamento com rasura',       descricao: 'Testamento oficial com uma linha rasurada. (8,2) Escritório.',                peso: 9,  celula: { x: 8, y: 2 }, coletada: false },
+  { id: 'copo_residuo',      nome: 'Copo com resíduo de chá',     descricao: 'Copo com sedimento suspeito no fundo. (4,5) Cozinha.',                       peso: 7,  celula: { x: 4, y: 5 }, coletada: false },
+  { id: 'planta_arsenico',   nome: 'Planta de arsênico colhida',  descricao: 'Ramo fresco de planta venenosa. (8,8) Estufa.',                              peso: 8,  celula: { x: 8, y: 8 }, coletada: false },
+  { id: 'diario_edmund',     nome: 'Diário de Sir Edmund',        descricao: 'Diário pessoal com entradas suspeitas. (2,7) Quarto de Hóspedes.',           peso: 6,  celula: { x: 2, y: 7 }, coletada: false },
+  { id: 'foto_rasgada',      nome: 'Foto rasgada',                descricao: 'Fotografia rasgada ao meio. (5,3) Sala de Jantar.',                          peso: 5,  celula: { x: 5, y: 3 }, coletada: false },
+  { id: 'pegadas_barro',     nome: 'Pegadas no barro',            descricao: 'Marcas de botas grandes na lama. (0,6) Jardim.',                             peso: 7,  celula: { x: 0, y: 6 }, coletada: false },
+  { id: 'chave_extra',       nome: 'Chave extra do cofre',        descricao: 'Cópia não autorizada da chave do cofre. (6,9) Quarto do Guarda.',            peso: 9,  celula: { x: 6, y: 9 }, coletada: false },
+  { id: 'bilhete_trem',      nome: 'Bilhete de trem cancelado',   descricao: 'Bilhete com data da noite do crime. (3,0) Biblioteca - 2º Andar.',           peso: 6,  celula: { x: 3, y: 0 }, coletada: false },
 ];
 
 const NPCS_MOCK: NPC[] = [
