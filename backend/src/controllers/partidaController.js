@@ -111,8 +111,26 @@ const getRota = async (req, res) => {
       return res.json({ rota: [], mensagem: 'Todas as pistas coletadas' });
     }
 
-    const rota = calcularRotaTSP(locaisPendentes);
-    res.json({ rota, algoritmo: locaisPendentes.length <= 15 ? 'held-karp' : 'heuristica' });
+    // Inclui a posição atual do detetive como ponto de partida obrigatório
+    // do ciclo TSP — sem isso o Held-Karp otimiza a ordem entre as pistas
+    // mas ignora de onde o jogador realmente está partindo, gerando uma
+    // rota que cruza o mapa sem relação com a posição real.
+    const DETETIVE_ID = '__detetive__';
+    const pontoDetetive = { id: DETETIVE_ID, x: partida.posicao.x, y: partida.posicao.y };
+    const pontos = [pontoDetetive, ...locaisPendentes];
+
+    const cicloCompleto = calcularRotaTSP(pontos);
+
+    // Rotaciona o ciclo para começar no detetive e remove esse ponto do
+    // resultado — ele já é desenhado separadamente pelo frontend, não é
+    // uma pista a ser numerada na lista.
+    const idxDetetive = cicloCompleto.findIndex(p => p.id === DETETIVE_ID);
+    const ciclo = idxDetetive > 0
+      ? [...cicloCompleto.slice(idxDetetive), ...cicloCompleto.slice(0, idxDetetive)]
+      : cicloCompleto;
+    const rota = ciclo.slice(1);
+
+    res.json({ rota, algoritmo: pontos.length <= 15 ? 'held-karp' : 'heuristica' });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -163,3 +181,5 @@ const getVisao = async (req, res) => {
 };
 
 module.exports = { criarPartida, getPartida, getInventario, coletarPista, getRota, acusar, getVisao };
+
+// quebra para commit
