@@ -87,7 +87,7 @@ Se o backend estiver offline, o jogo funciona em *modo offline* com fallbacks lo
 │      ▼                              ▼               │
 │  DialogueScreen ◄── noAtualData  gameStore          │
 │      │              (Zustand)       │               │
-│      │                        POST /interagir        │
+│      │                        POST /interagir       │
 │  HUD (inventário MaxHeap)    POST /escolha          │
 │  Accusation                  GET  /rota             │
 └────────────────────────────┬────────────────────────┘
