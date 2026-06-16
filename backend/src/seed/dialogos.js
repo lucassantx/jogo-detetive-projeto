@@ -176,6 +176,60 @@ const dialogos = [
     escolhas: [
       { texto: 'Encerrar conversa.', proximoId: null, pistaBloqueada: null, xp: 5 }
     ]
+  },
+
+  // ── Dr. Reginald Harlow ────────────────────────────────────────────────────
+  {
+    id: 'D0',
+    npc: 'Dr. Harlow',
+    texto: 'Sim. Parada cardíaca. Edmund tinha histórico de problemas cardíacos — menos graves, mas presentes.',
+    escolhas: [
+      { texto: 'O senhor examinou o corpo com cuidado?',                                 proximoId: 'D1', pistaBloqueada: null, xp: 15 },
+      { texto: 'Edmund te contou que estava doente?',                                    proximoId: 'D2', pistaBloqueada: null, xp: 20 },
+      { texto: 'Por que assinou parada cardíaca se havia resíduo suspeito na cozinha?',  proximoId: 'D3', pistaBloqueada: null, xp: 30 },
+    ]
+  },
+  {
+    id: 'D1',
+    npc: 'Dr. Harlow',
+    texto: 'Examinei com toda a diligência devida. Os sinais eram consistentes com parada cardíaca. Edmund tinha histórico documentado. Não havia razão para suspeitar de outra coisa.',
+    escolhas: [
+      { texto: 'Havia sim.', proximoId: null, pistaBloqueada: null, xp: 5 }
+    ]
+  },
+  {
+    id: 'D2',
+    npc: 'Dr. Harlow',
+    texto: 'Edmund tinha câncer pancreático em estágio avançado. Diagnosticado em março. Três a seis meses, no máximo. Ele me pediu para não contar a ninguém. Isso não justifica o que aconteceu com ele. Mas você precisa entender — mesmo sem isso, ele não passaria do verão.',
+    escolhas: [
+      { texto: 'Então o assassino matou um moribundo?', proximoId: 'D2a', pistaBloqueada: null, xp: 15 },
+      { texto: 'Quem mais sabia do diagnóstico?',       proximoId: 'D2b', pistaBloqueada: null, xp: 15 },
+      { texto: 'Você encobriu o crime por isso?',       proximoId: 'D3',  pistaBloqueada: null, xp: 25 },
+    ]
+  },
+  {
+    id: 'D2a',
+    npc: 'Dr. Harlow',
+    texto: 'Ironicamente, sim. E por herança que já receberia em meses de qualquer forma.',
+    escolhas: [
+      { texto: 'A pressa foi a ruína dele.', proximoId: null, pistaBloqueada: null, xp: 5 }
+    ]
+  },
+  {
+    id: 'D2b',
+    npc: 'Dr. Harlow',
+    texto: 'Ninguém. Só eu.',
+    escolhas: [
+      { texto: 'Tem certeza?', proximoId: null, pistaBloqueada: null, xp: 5 }
+    ]
+  },
+  {
+    id: 'D3',
+    npc: 'Dr. Harlow',
+    texto: 'Edmund ia morrer de qualquer forma. Pensei que... que deixar isso em paz seria mais piedoso. Para ele. Para a memória dele. Eu errei. Eu sei que errei.',
+    escolhas: [
+      { texto: 'Sim. Errou.', proximoId: null, pistaBloqueada: 'frasco_arsenico', xp: 30 }
+    ]
   }
 ];
 
