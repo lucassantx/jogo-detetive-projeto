@@ -438,7 +438,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  mover: (dx, dy) => {
+mover: (dx, dy) => {
     const state = get();
     if (state.dialogoAtivo) return;
 
@@ -456,6 +456,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const direcao = DIRS[`${dx},${dy}`];
     if (!direcao) return;
 
+    // Sync silencioso com o backend — NÃO sobrescreve a posição local.
+    // O cliente já calcula a mesma posição (clamp 0–9) que o backend,
+    // então sobrescrever causa "bate-volta" visual quando respostas
+    // chegam fora de ordem (latência do Atlas + movimentos rápidos).
     fetch(`${API}/${state.partidaId}/mover`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -463,14 +467,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (!data) return;
+        if (!data?.visao) return;
         set(s => {
           const celulas = new Set(s.celulasReveladas);
           (data.visao as { x: number; y: number }[]).forEach(c => celulas.add(`${c.x},${c.y}`));
-          return { posicao: data.posicao, celulasReveladas: celulas };
+          return { celulasReveladas: celulas };
         });
       })
-      .catch(() => { /* mantém posição otimista */ });
+      .catch(() => { /* mantém posição e células otimistas */ });
   },
 
   coletarPista: (pistaId) => {
