@@ -78,52 +78,39 @@ Se o backend estiver offline, o jogo funciona em *modo offline* com fallbacks lo
 ## Arquitetura <a name="arquitetura"></a>
 
 
-┌─────────────────────────────────────────────────────┐
-│  Browser — React + Zustand                          │
-│                                                     │
-│  ┌──────────────┐    ┌──────────────────────────┐  │
-│  │  MapScreen   │    │  DialogueScreen          │  │
-│  │              │    │                          │  │
-│  │ useMovimento │    │  noAtualData (Zustand)  │  │
-│  │ gameStore.   │    │                          │  │
-│  │ mover()      │    │  HUD (MaxHeap)          │  │
-│  │              │    │  Accusation             │  │
-│  └──────────────┘    └──────────────────────────┘  │
-│         │                        │                  │
-│         └────────┬───────────────┘                  │
-│                  │ HTTP JSON (/api/*)               │
-└──────────────────┼──────────────────────────────────┘
-
-
-
-
-
-                             
-┌────────────────────────────▼────────────────────────┐
-│  Express — Node.js                                  │
-│                                                     │
-│  /api/partida/:id/mover    → mapaController         │
-│  /api/partida/:id/interagir → dialogoController     │
-│  /api/partida/:id/escolha  → dialogoController      │
-│  /api/partida/:id/coletar  → partidaController      │
-│  /api/partida/:id/rota     → partidaController      │
-│  /api/partida/:id/acusar   → partidaController      │
-│                                                     │
-│  Estruturas: BFS · MaxHeap · ArvoreDecisao · TSP    │
-└────────────────────────────┬────────────────────────┘
-                             │ Mongoose
-
-
-
-
-
-                             
-┌────────────────────────────▼────────────────────────┐
-│  MongoDB — coleção Partida                          │
-│  { posicao, celulasReveladas, pistasColetadas,      │
-│    xp, dialogoAtual, rota, acusacao }               │
-└─────────────────────────────────────────────────────┘
-
+FRONTEND                                    BACKEND
+┌─────────────────────────────────┐        ┌─────────────────────────────────┐
+│  MapScreen (Grid + SVG)        │        │  /api/partida/:id/mover        │
+│  ├─ useMovimento (WASD)        │───────▶│  └─ BFS.calcularVisao()        │
+│  └─ gameStore.mover()          │        │     └─ O(r²)                    │
+│                                 │        │                                 │
+│  DialogueScreen (Árvore)       │        │  /api/partida/:id/interagir    │
+│  ├─ gameStore.iniciarDialogo() │───────▶│  └─ ArvoreDecisao.get()        │
+│  └─ gameStore.escolherOpcao()  │        │     └─ O(1)                    │
+│                                 │        │                                 │
+│  HUD (MaxHeap)                 │        │  /api/partida/:id/coletar      │
+│  └─ gameStore.coletarPista()   │───────▶│  └─ MaxHeap.insert()           │
+│                                 │        │     └─ O(log n)               │
+│  Accusation                    │        │                                 │
+│  └─ gameStore.acusar()         │───────▶│  /api/partida/:id/acusar       │
+│                                 │        │  └─ MaxHeap.top3()             │
+│  gameStore (Zustand)           │        │     └─ O(n log n)              │
+│  ├─ BFS local (offline)        │        │                                 │
+│  ├─ MaxHeap local (offline)    │        │                                 │
+│  └─ tspHeldKarp (offline)      │────────┼─────────────────────────────────│
+└─────────────────────────────────┘        └─────────────────────────────────┘
+                                                      │
+                                                      ▼
+                                            ┌─────────────────────────────────┐
+                                            │  MongoDB - Partida              │
+                                            │  ├─ posicao                     │
+                                            │  ├─ celulasReveladas            │
+                                            │  ├─ pistasColetadas             │
+                                            │  ├─ xp                         │
+                                            │  ├─ dialogoAtual               │
+                                            │  ├─ rota                       │
+                                            │  └─ acusacao                   │
+                                            └─────────────────────────────────┘
 
 ---
 
