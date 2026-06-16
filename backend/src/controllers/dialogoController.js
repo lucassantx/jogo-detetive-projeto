@@ -6,6 +6,7 @@ const NPC_POR_CELULA = {
   '3,4': 'A0', // Adelaide Cross
   '7,6': 'B0', // Victor Blackwood
   '1,9': 'C0', // Fynn O'Brien
+  '9,4': 'D0', // Dr. Harlow
 };
 
 const arvore = new ArvoreDecisao(dialogos);

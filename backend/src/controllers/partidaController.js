@@ -12,10 +12,11 @@ const criarPartida = async (req, res) => {
       celulasReveladas: [{ x: 0, y: 0 }],
       pistasColetadas: [],
       xp: 0,
-      status: 'em_andamento', // corrigido: era 'ativa'
+      status: 'em_andamento',
     });
     res.status(201).json({ partidaId: partida._id });
   } catch (err) {
+    console.error('[criarPartida]', err.message);
     res.status(500).json({ erro: err.message });
   }
 };
@@ -52,31 +53,45 @@ const getInventario = async (req, res) => {
 const coletarPista = async (req, res) => {
   try {
     const { pistaId } = req.body;
-    const partida = await Partida.findById(req.params.id);
-    if (!partida) return res.status(404).json({ erro: 'Partida não encontrada' });
 
     const pista = await Pista.findOne({ id: pistaId });
     if (!pista) return res.status(404).json({ erro: 'Pista não encontrada' });
 
-    const jaColetada = partida.pistasColetadas.some(p => p.id === pistaId);
-    if (jaColetada) return res.status(409).json({ erro: 'Pista já coletada' });
-
-    partida.pistasColetadas.push({
+    const novaPista = {
       id:          pista.id,
       nome:        pista.nome,
       descricao:   pista.descricao,
       peso:        pista.peso,
-      localizacao: pista.localizacao ?? pista.local ?? 'Mansão Blackwood', // compatível com seed do João
+      localizacao: pista.localizacao ?? 'Mansão Blackwood',
       categoria:   pista.categoria  ?? 'evidencia_fisica',
-    });
-    partida.xp += pista.peso * 10;
-    await partida.save();
+    };
+
+    // operação atômica — evita VersionError em requisições simultâneas
+    const partida = await Partida.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        'pistasColetadas.id': { $ne: pistaId }, // só atualiza se pista ainda não coletada
+      },
+      {
+        $push: { pistasColetadas: novaPista },
+        $inc:  { xp: pista.peso * 10 },
+      },
+      { new: true }
+    );
+
+    if (!partida) {
+      // documento não encontrado OU pista já coletada
+      const existe = await Partida.findById(req.params.id);
+      if (!existe) return res.status(404).json({ erro: 'Partida não encontrada' });
+      return res.status(409).json({ erro: 'Pista já coletada' });
+    }
 
     const heap = new MaxHeap();
     for (const p of partida.pistasColetadas) heap.insert(p);
 
     res.json({ pistaColetada: pista, top3: heap.top3(), xpTotal: partida.xp });
   } catch (err) {
+    console.error('[coletarPista]', err.message);
     res.status(500).json({ erro: err.message });
   }
 };
@@ -117,8 +132,11 @@ const acusar = async (req, res) => {
     if (!suspeito) return res.status(404).json({ erro: 'Suspeito não encontrado' });
 
     const acertou = suspeito.ehAssassino;
-    partida.status = acertou ? 'vitoria' : 'derrota';
-    await partida.save();
+
+    await Partida.findByIdAndUpdate(req.params.id, {
+      status: acertou ? 'vitoria' : 'derrota',
+      acusado: suspeitoId,
+    });
 
     res.json({
       acertou,

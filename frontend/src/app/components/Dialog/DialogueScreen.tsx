@@ -6,33 +6,48 @@ const TYPEWRITER_MS = 30;
 
 const DialogueScreen: React.FC = () => {
   const dialogoAtivo   = useGameStore(s => s.dialogoAtivo);
-  const noDialogoAtual = useGameStore(s => s.noDialogoAtual);
   const noAtualData    = useGameStore(s => s.noAtualData);
+  const npcAtual       = useGameStore(s => s.npcAtual);
   const avancarDialogo = useGameStore(s => s.avancarDialogo);
   const fecharDialogo  = useGameStore(s => s.fecharDialogo);
 
   const [displayText,   setDisplayText]   = useState('');
   const [textoCompleto, setTextoCompleto] = useState(false);
   const [visivel,       setVisivel]       = useState(false);
+  const [aguardando,    setAguardando]    = useState(false);
+
+  const npcDoNo     = useRef<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const no = noAtualData;
-
-  // Exibe painel ao abrir diálogo ou ao trocar de nó
+  // abre o painel quando diálogo inicia; fecha quando termina
   useEffect(() => {
-    if (dialogoAtivo) setVisivel(true);
-  }, [dialogoAtivo, noDialogoAtual]);
+    if (dialogoAtivo) {
+      setVisivel(true);
+      setAguardando(false);
+    } else {
+      // dialogo encerrado pelo store — fecha o painel
+      setVisivel(false);
+      setAguardando(false);
+      setDisplayText('');
+      setTextoCompleto(false);
+    }
+  }, [dialogoAtivo]);
 
-  // Auto-fecha se backend não retornar nó em 5 s
+  // limpa texto ao trocar de NPC
   useEffect(() => {
-    if (!dialogoAtivo || noAtualData) return;
-    const t = setTimeout(() => fecharDialogo(), 5000);
-    return () => clearTimeout(t);
-  }, [dialogoAtivo, noAtualData, fecharDialogo]);
+    if (!dialogoAtivo) return;
+    if (npcAtual !== npcDoNo.current) {
+      setDisplayText('');
+      setTextoCompleto(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  }, [npcAtual, dialogoAtivo]);
 
-  // Typewriter: reinicia a cada nó novo
+  // typewriter dispara quando noAtualData chega
   useEffect(() => {
-    if (!no) return;
+    if (!noAtualData) return;
+    npcDoNo.current = npcAtual;
+    setAguardando(false);
     setDisplayText('');
     setTextoCompleto(false);
 
@@ -41,47 +56,48 @@ const DialogueScreen: React.FC = () => {
     let idx = 0;
     intervalRef.current = setInterval(() => {
       idx++;
-      setDisplayText(no.texto.slice(0, idx));
-      if (idx >= no.texto.length) {
+      setDisplayText(noAtualData.texto.slice(0, idx));
+      if (idx >= noAtualData.texto.length) {
         clearInterval(intervalRef.current!);
         setTextoCompleto(true);
       }
     }, TYPEWRITER_MS);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [noDialogoAtual]);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [noAtualData]);
 
   const skipTypewriter = useCallback(() => {
-    if (!no || textoCompleto) return;
+    if (!noAtualData || textoCompleto) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setDisplayText(no.texto);
+    setDisplayText(noAtualData.texto);
     setTextoCompleto(true);
-  }, [no, textoCompleto]);
+  }, [noAtualData, textoCompleto]);
 
-  // index = posição da escolha na lista → backend usa para identificar o ramo
-  const handleEscolha = (noAtualId: string, index: number) => {
-    setVisivel(false);
-    setTimeout(() => avancarDialogo(noAtualId, index), 260);
-  };
+  const handleEscolha = useCallback((noId: string, index: number) => {
+    if (aguardando) return;
+    setAguardando(true);
+    setTextoCompleto(false);
+    setDisplayText('');
+    avancarDialogo(noId, index);
+  }, [aguardando, avancarDialogo]);
 
-  const handleEncerrar = () => {
-    setVisivel(false);
-    setTimeout(() => fecharDialogo(), 260);
-  };
+  const handleEncerrar = useCallback(() => {
+    fecharDialogo();
+  }, [fecharDialogo]);
 
-  if (!dialogoAtivo && !visivel) return null;
+  if (!visivel) return null;
+
+  const no = noAtualData;
 
   return (
     <div
-      className={`dialogue-overlay ${visivel ? 'dialogue-overlay--visible' : ''}`}
+      className={`dialogue-overlay dialogue-overlay--visible`}
       role="dialog"
       aria-modal="true"
       aria-label={no ? `Diálogo com ${no.npc}` : 'Diálogo'}
     >
       <div className="dialogue-screen">
-        {no ? (
+        {no && !aguardando ? (
           <>
             <div className="dialogue-npc-nome">{no.npc}</div>
 
@@ -104,10 +120,10 @@ const DialogueScreen: React.FC = () => {
                       key={i}
                       className={[
                         'dialogue-choice-btn',
-                        escolha.usado    ? 'dialogue-choice-btn--usado'    : '',
+                        escolha.usado     ? 'dialogue-choice-btn--usado'    : '',
                         escolha.visitado && !escolha.usado ? 'dialogue-choice-btn--visitado' : '',
                       ].filter(Boolean).join(' ')}
-                      disabled={escolha.usado}
+                      disabled={escolha.usado || aguardando}
                       onClick={() => !escolha.usado && handleEscolha(no.id, i)}
                     >
                       <span className="choice-xp">
@@ -127,11 +143,11 @@ const DialogueScreen: React.FC = () => {
               </div>
             )}
           </>
-        ) : (
+        ) : aguardando ? (
           <div className="dialogue-carregando" aria-live="polite">
             Carregando…
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
