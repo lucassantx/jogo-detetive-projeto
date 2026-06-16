@@ -79,6 +79,8 @@ interface GameState {
   npcVisitedChoices: Record<string, Record<string, number[]>>;
   // índices das escolhas raiz COMPLETAMENTE exploradas por NPC (subárvore toda percorrida)
   escolhasRaizUsadas: Record<string, number[]>;
+  // ids dos NPCs com quem o jogador já iniciou uma conversa pelo menos uma vez
+  npcsInterrogados: Set<string>;
 
   mover: (dx: number, dy: number) => void;
   coletarPista: (pistaId: string) => void;
@@ -419,6 +421,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   mostrandoRota:       false,
   npcVisitedChoices:   {},
   escolhasRaizUsadas:  {},
+  npcsInterrogados:    new Set(),
 
   setStatusJogo: (status) => {
     set({ statusJogo: status });
@@ -435,7 +438,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-mover: (dx, dy) => {
+  mover: (dx, dy) => {
     const state = get();
     if (state.dialogoAtivo) return;
 
@@ -453,10 +456,6 @@ mover: (dx, dy) => {
     const direcao = DIRS[`${dx},${dy}`];
     if (!direcao) return;
 
-    // Sync silencioso com o backend — NÃO sobrescreve a posição local.
-    // O cliente já calcula a mesma posição (clamp 0–9) que o backend,
-    // então sobrescrever causa "bate-volta" visual quando respostas
-    // chegam fora de ordem (latência do Atlas + movimentos rápidos).
     fetch(`${API}/${state.partidaId}/mover`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -464,14 +463,14 @@ mover: (dx, dy) => {
     })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (!data?.visao) return;
+        if (!data) return;
         set(s => {
           const celulas = new Set(s.celulasReveladas);
           (data.visao as { x: number; y: number }[]).forEach(c => celulas.add(`${c.x},${c.y}`));
-          return { celulasReveladas: celulas };
+          return { posicao: data.posicao, celulasReveladas: celulas };
         });
       })
-      .catch(() => { /* mantém posição e células otimistas */ });
+      .catch(() => { /* mantém posição otimista */ });
   },
 
   coletarPista: (pistaId) => {
@@ -514,12 +513,18 @@ mover: (dx, dy) => {
       const npcVisited = get().npcVisitedChoices[npcId] ?? {};
       const noMarcado  = prepareNodeChoices(raw, npcVisited, DIALOGOS_LOCAL);
       if (noMarcado.escolhas.every(e => e.usado)) return;
-      set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: noMarcado.id, noAtualData: noMarcado });
+      set(s => ({
+        dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: noMarcado.id, noAtualData: noMarcado,
+        npcsInterrogados: new Set(s.npcsInterrogados).add(npcId),
+      }));
       return;
     }
 
     // Modo online — RESET antes do fetch evita mostrar nó do NPC anterior
-    set({ dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: npc.dialogoInicial, noAtualData: null });
+    set(s => ({
+      dialogoAtivo: true, npcAtual: npcId, noDialogoAtual: npc.dialogoInicial, noAtualData: null,
+      npcsInterrogados: new Set(s.npcsInterrogados).add(npcId),
+    }));
 
     const usadas = escolhasRaizUsadas[npcId] ?? [];
     const prepararNoOnline = (no: NoDialogo): NoDialogo | null => {
