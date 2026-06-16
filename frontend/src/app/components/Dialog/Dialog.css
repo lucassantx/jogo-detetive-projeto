@@ -109,6 +109,22 @@
   margin-right: var(--spacing-xs);
 }
 
+/* Bloqueada por pista não coletada — cadeado, não clicável */
+.dialogue-choice-btn--bloqueada {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.dialogue-choice-btn--bloqueada:hover,
+.dialogue-choice-btn--bloqueada:focus-visible {
+  background: transparent;
+  border-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+}
+
 /* Visitada mas com sub-ramos ainda disponíveis — clicável, com indicador */
 .dialogue-choice-btn--visitado {
   border-color: var(--color-primary-dark);
