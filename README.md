@@ -93,6 +93,11 @@ Se o backend estiver offline, o jogo funciona em *modo offline* com fallbacks lo
 │         └────────┬───────────────┘                  │
 │                  │ HTTP JSON (/api/*)               │
 └──────────────────┼──────────────────────────────────┘
+
+
+
+
+
                              
 ┌────────────────────────────▼────────────────────────┐
 │  Express — Node.js                                  │
@@ -107,6 +112,12 @@ Se o backend estiver offline, o jogo funciona em *modo offline* com fallbacks lo
 │  Estruturas: BFS · MaxHeap · ArvoreDecisao · TSP    │
 └────────────────────────────┬────────────────────────┘
                              │ Mongoose
+
+
+
+
+
+                             
 ┌────────────────────────────▼────────────────────────┐
 │  MongoDB — coleção Partida                          │
 │  { posicao, celulasReveladas, pistasColetadas,      │
