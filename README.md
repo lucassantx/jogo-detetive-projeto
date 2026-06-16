@@ -78,40 +78,13 @@ Se o backend estiver offline, o jogo funciona em *modo offline* com fallbacks lo
 ## Arquitetura <a name="arquitetura"></a>
 
 
-FRONTEND                                    BACKEND
-┌─────────────────────────────────┐        ┌─────────────────────────────────┐
-│  MapScreen (Grid + SVG)        │        │  /api/partida/:id/mover        │
-│  ├─ useMovimento (WASD)        │───────▶│  └─ BFS.calcularVisao()        │
-│  └─ gameStore.mover()          │        │     └─ O(r²)                    │
-│                                 │        │                                 │
-│  DialogueScreen (Árvore)       │        │  /api/partida/:id/interagir    │
-│  ├─ gameStore.iniciarDialogo() │───────▶│  └─ ArvoreDecisao.get()        │
-│  └─ gameStore.escolherOpcao()  │        │     └─ O(1)                    │
-│                                 │        │                                 │
-│  HUD (MaxHeap)                 │        │  /api/partida/:id/coletar      │
-│  └─ gameStore.coletarPista()   │───────▶│  └─ MaxHeap.insert()           │
-│                                 │        │     └─ O(log n)               │
-│  Accusation                    │        │                                 │
-│  └─ gameStore.acusar()         │───────▶│  /api/partida/:id/acusar       │
-│                                 │        │  └─ MaxHeap.top3()             │
-│  gameStore (Zustand)           │        │     └─ O(n log n)              │
-│  ├─ BFS local (offline)        │        │                                 │
-│  ├─ MaxHeap local (offline)    │        │                                 │
-│  └─ tspHeldKarp (offline)      │────────┼─────────────────────────────────│
-└─────────────────────────────────┘        └─────────────────────────────────┘
-                                                      │
-                                                      ▼
-                                            ┌─────────────────────────────────┐
-                                            │  MongoDB - Partida              │
-                                            │  ├─ posicao                     │
-                                            │  ├─ celulasReveladas            │
-                                            │  ├─ pistasColetadas             │
-                                            │  ├─ xp                         │
-                                            │  ├─ dialogoAtual               │
-                                            │  ├─ rota                       │
-                                            │  └─ acusacao                   │
-                                            └─────────────────────────────────┘
-
+| Camada | Tecnologia | Componentes Principais | Estruturas de Dados |
+|--------|-----------|----------------------|-------------------|
+| **Apresentação** | React 18 + TypeScript | MapScreen, DialogueScreen, HUD, Accusation | - |
+| **Estado** | Zustand | gameStore (estado + ações) | MaxHeap (local), BFS (local) |
+| **Comunicação** | Fetch API + React Query | HTTP/JSON para /api/* | - |
+| **API** | Express + Node.js | mapaController, partidaController, dialogoController | BFS, MaxHeap, Árvore Decisão, TSP |
+| **Persistência** | Mongoose + MongoDB | Model: Partida | Documento JSON |
 ---
 
 ## API REST <a name="api"></a>
